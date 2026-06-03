@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Studio HQ — Command Center</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230b0c0f'/><rect x='8' y='6' width='17' height='20' rx='2.5' fill='%23d6ff3f'/><rect x='8' y='6' width='4' height='20' rx='2' fill='%23000000' opacity='.16'/><g stroke='%230b0c0f' stroke-width='1.8' stroke-linecap='round'><path d='M15 12h6'/><path d='M15 16h6'/><path d='M15 20h4'/></g><g stroke='%230b0c0f' stroke-width='1.8' stroke-linecap='round' opacity='.5'><path d='M10 10v2.2'/><path d='M10 15v2.2'/><path d='M10 19.8v2.2'/></g></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0c0f; --panel:#131419; --line:rgba(255,255,255,.08); --line-strong:rgba(255,255,255,.14);
+    --text:#ECECEE; --muted:#8a8d97; --accent:#d6ff3f; --radius:18px; --shadow:0 18px 50px -20px rgba(0,0,0,.7);
+    font-synthesis:none;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{background:var(--bg);color:var(--text);font-family:"Hanken Grotesk",-apple-system,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.45;overflow-x:hidden;position:relative}
+  body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+    background:radial-gradient(900px 600px at 12% -8%,rgba(214,255,63,.10),transparent 60%),radial-gradient(800px 700px at 100% 0%,rgba(91,140,255,.10),transparent 55%),radial-gradient(700px 700px at 80% 110%,rgba(176,124,255,.08),transparent 55%)}
+  body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.035;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+  .wrap{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:38px 26px 80px}
+  .hidden{display:none!important}
+
+  #login{position:relative;z-index:1;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+  .card{width:100%;max-width:400px;background:var(--panel);border:1px solid var(--line);border-radius:24px;padding:38px 34px;box-shadow:var(--shadow)}
+  .card .pulse{width:11px;height:11px;border-radius:50%;background:var(--accent);display:inline-block;box-shadow:0 0 16px var(--accent)}
+  .card .label{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--muted);margin-left:9px}
+  .card h1{font-family:"Bricolage Grotesque";font-weight:800;font-size:30px;letter-spacing:-.02em;margin:20px 0 6px}
+  .card p{color:var(--muted);font-size:14px;margin-bottom:24px}
+  .field{display:flex;flex-direction:column;gap:9px}
+  input[type=email],input[type=text],select{width:100%;background:#0e0f13;border:1px solid var(--line-strong);color:var(--text);border-radius:12px;padding:13px 15px;font-family:inherit;font-size:15px;outline:none;transition:.18s}
+  input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(214,255,63,.12)}
+  textarea{width:100%;background:#0e0f13;border:1px solid var(--line-strong);color:var(--text);border-radius:12px;padding:12px 14px;font-family:inherit;font-size:14px;outline:none;transition:.18s;resize:vertical;min-height:74px;line-height:1.45}
+  textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(214,255,63,.12)}
+  .btn{background:var(--accent);color:#0b0c0f;border:none;border-radius:12px;padding:13px 18px;font-family:"Bricolage Grotesque";font-weight:700;font-size:15px;cursor:pointer;transition:.18s;letter-spacing:.01em}
+  .btn:hover{filter:brightness(1.06);transform:translateY(-1px)}
+  .btn:disabled{opacity:.5;cursor:default;transform:none}
+  .note{font-size:13px;margin-top:16px;min-height:18px}
+  .note.ok{color:var(--accent)} .note.err{color:#ff8b7d}
+
+  header{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:18px;margin-bottom:24px}
+  .pulse{width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 0 rgba(214,255,63,.5);animation:pulse 2.4s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(214,255,63,.45)}70%{box-shadow:0 0 0 9px rgba(214,255,63,0)}100%{box-shadow:0 0 0 0 rgba(214,255,63,0)}}
+  .greet{font-family:"Bricolage Grotesque";font-weight:800;font-size:clamp(28px,5vw,44px);line-height:1.02;letter-spacing:-.02em}
+  .greet .sub{display:block;font-family:"JetBrains Mono",monospace;font-weight:400;font-size:13px;letter-spacing:.05em;color:var(--muted);margin-top:9px;text-transform:uppercase}
+  .signout{background:none;border:1px solid var(--line);color:var(--muted);border-radius:10px;padding:8px 13px;font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.05em;cursor:pointer;transition:.18s}
+  .signout:hover{border-color:var(--line-strong);color:var(--text)}
+
+  /* Quick capture — sits at the top of the Today panel */
+  .qadd{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding-bottom:14px;margin-bottom:6px;border-bottom:1px solid var(--line)}
+  .qadd input[type=text]{flex:1;min-width:160px}
+  .qadd select{width:auto;min-width:110px}
+  .qbtns{display:flex;gap:7px}
+  .chip{background:#0e0f13;border:1px solid var(--line-strong);color:var(--text);border-radius:10px;padding:11px 13px;font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:.18s}
+  .chip:hover{border-color:var(--accent);color:var(--accent)}
+
+  /* Hero: what do you want to work on today */
+  .plan{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px 24px 22px;margin-bottom:22px;box-shadow:var(--shadow);display:flex;gap:30px;align-items:stretch}
+  .plan-main{flex:1 1 auto;min-width:0;display:flex;flex-direction:column}
+  .plan-exp{flex:0 1 320px;min-width:0;display:flex;flex-direction:column;border-left:1px solid var(--line);padding-left:26px}
+  .plan-main h2{font-family:"Bricolage Grotesque";font-weight:800;font-size:clamp(20px,3vw,26px);letter-spacing:-.01em;margin-bottom:5px}
+  .plan-main .hint{font-size:13.5px;color:var(--muted);margin-bottom:16px;max-width:640px}
+  @media(max-width:760px){
+    .plan{flex-direction:column;gap:20px}
+    .plan-exp{border-left:none;border-top:1px solid var(--line);padding-left:0;padding-top:18px}
+  }
+  .proj-head{display:flex;align-items:center;justify-content:space-between;margin:2px 0 4px}
+  .proj-head .lbl{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+  #planProjects{max-height:280px;overflow-y:auto;margin-bottom:16px}
+  #planProjects::-webkit-scrollbar{width:7px}
+  #planProjects::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:8px}
+  #planProjects::-webkit-scrollbar-track{background:transparent}
+  .controls{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .hours{display:flex;gap:6px;align-items:center}
+  .hpick{background:#0e0f13;border:1px solid var(--line-strong);color:var(--text);border-radius:9px;padding:9px 13px;font-family:"JetBrains Mono",monospace;font-size:12px;cursor:pointer;transition:.18s}
+  .hpick.on,.hpick:hover{border-color:var(--accent);color:var(--accent)}
+  .go{margin-left:auto}
+  .pnote{font-size:12.5px;color:var(--muted);margin-top:13px;min-height:16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+  .pnote .msg.ok{color:var(--accent)}
+  .linkbtn{background:none;border:none;color:var(--muted);font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.04em;cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:0}
+  .linkbtn:hover{color:var(--text)}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px 22px 12px;box-shadow:var(--shadow)}
+  .wrap > .panel{margin-bottom:22px}
+  .phead{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+  .phead h2{font-family:"Bricolage Grotesque";font-weight:800;font-size:15px;letter-spacing:.14em;text-transform:uppercase}
+  .phead .count{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--muted)}
+  .padd{background:none;border:1px solid var(--line-strong);color:var(--muted);border-radius:8px;padding:5px 11px;font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:.18s}
+  .padd:hover{border-color:var(--accent);color:var(--accent)}
+  .addform{display:none;flex-direction:column;gap:9px;padding:14px 2px 16px;border-bottom:1px solid var(--line);margin-bottom:8px}
+  .addform.open{display:flex}
+  .addform .mini{font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.04em;color:var(--muted);min-height:14px}
+  .addform .mini.err{color:#ff8b7d} .addform .mini.ok{color:var(--accent)}
+  .section-sub{font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:16px 0 6px}
+  .section-sub.over{color:#ff8b7d}
+
+  .task{display:flex;gap:13px;align-items:flex-start;padding:13px 6px;border-bottom:1px solid var(--line);border-radius:10px;transition:background .18s;opacity:0;transform:translateY(8px);animation:rise .45s forwards}
+  @keyframes rise{to{opacity:1;transform:none}}
+  .task:last-child{border-bottom:none}
+  .task:hover{background:rgba(255,255,255,.025)}
+  .task:hover .del{opacity:.7}
+  .box{flex:none;width:21px;height:21px;border-radius:7px;border:2px solid var(--line-strong);margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.18s;cursor:pointer}
+  .box svg{width:12px;height:12px;opacity:0;transform:scale(.4);transition:.2s}
+  .task.done .box{background:var(--accent);border-color:var(--accent)}
+  .task.done .box svg{opacity:1;transform:scale(1)}
+  .task.done .ttext{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--line-strong)}
+  .tbody{flex:1;min-width:0;cursor:pointer}
+  .ttext{font-size:15px;font-weight:500;transition:.18s}
+  .meta{display:flex;align-items:center;gap:9px;margin-top:6px;flex-wrap:wrap}
+  .tag{display:inline-flex;align-items:center;gap:6px;font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.04em;color:var(--muted);text-transform:uppercase}
+  .dot{width:8px;height:8px;border-radius:50%}
+  .prio{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:6px;border:1px solid var(--line)}
+  .prio.high{color:#ff8b7d;border-color:rgba(255,139,125,.35)} .prio.low{color:var(--muted)}
+  .size{font-family:"JetBrains Mono",monospace;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:6px;border:1px solid var(--line);color:var(--muted)}
+  .size.quick{color:#4ad6c0;border-color:rgba(74,214,192,.32)}
+  .size.deep{color:#ffb547;border-color:rgba(255,181,71,.32)}
+  .size.daily{color:#b07cff;border-color:rgba(176,124,255,.4)}
+  .del{flex:none;background:none;border:none;color:var(--muted);font-size:18px;line-height:1;cursor:pointer;opacity:0;transition:.18s;padding:0 4px;margin-top:-1px}
+  .del:hover{color:#ff8b7d;opacity:1!important}
+  .empty{padding:24px 6px;color:var(--muted);font-size:14px;text-align:center}
+  .binnote{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.04em;color:var(--muted);margin:2px 0 4px}
+  .task.bin{opacity:.62;transition:opacity .18s} .task.bin:hover{opacity:1}
+  .task.bin .box{cursor:pointer}
+  .topbtns{display:flex;gap:10px;align-items:center}
+  .modal{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(0,0,0,.55);backdrop-filter:blur(4px)}
+  .modal-card{width:100%;max-width:480px;max-height:82vh;display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:22px 22px 18px;box-shadow:var(--shadow);animation:rise .25s ease}
+  .modal-head{display:flex;align-items:center;justify-content:space-between}
+  .modal-head h2{font-family:"Bricolage Grotesque";font-weight:800;font-size:19px;letter-spacing:-.01em}
+  .modal-x{background:none;border:none;color:var(--muted);font-size:26px;line-height:1;cursor:pointer;padding:0 2px;transition:.18s}
+  .modal-x:hover{color:var(--text)}
+  .modal-sub{font-size:13px;color:var(--muted);margin:2px 0 14px}
+  .modal-card .qadd{border-bottom:1px solid var(--line)}
+  #emWrap{overflow-y:auto;margin-top:2px}
+  #emWrap::-webkit-scrollbar{width:7px}
+  #emWrap::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:8px}
+  .emrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 2px;border-bottom:1px solid var(--line)}
+  .emrow:last-child{border-bottom:none}
+  .emrow .eminfo{min-width:0}
+  .emrow .emuse{font-weight:600;font-size:14px}
+  .emrow .emaddr{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px}
+  .emrow .emacts{display:flex;align-items:center;gap:10px;flex:none}
+  .emrow .pdel{flex:none;background:none;border:none;color:var(--muted);font-size:17px;line-height:1;cursor:pointer;opacity:.5;transition:.18s;padding:0 2px}
+  .emrow .pdel:hover{color:#ff8b7d;opacity:1}
+  .adrow{display:flex;align-items:flex-start;gap:11px;padding:12px 2px;border-bottom:1px solid var(--line)}
+  .adrow:last-child{border-bottom:none}
+  .adcheck{flex:none;width:20px;height:20px;border-radius:6px;border:2px solid var(--line-strong);background:none;cursor:pointer;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.18s;padding:0}
+  .adcheck svg{width:11px;height:11px;opacity:0;transform:scale(.4);transition:.2s}
+  .adrow.done .adcheck{background:var(--accent);border-color:var(--accent)}
+  .adrow.done .adcheck svg{opacity:1;transform:scale(1)}
+  .adrow.done .adidea{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--line-strong)}
+  .adinfo{min-width:0;flex:1}
+  .adidea{font-weight:600;font-size:14px;line-height:1.35}
+  .adlink{display:block;font-family:"JetBrains Mono",monospace;font-size:12px;color:#5b8cff;text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:3px}
+  .adlink:hover{text-decoration:underline}
+  .adacts{display:flex;align-items:center;gap:10px;flex:none;margin-top:1px}
+  .adrow .pdel{flex:none;background:none;border:none;color:var(--muted);font-size:17px;line-height:1;cursor:pointer;opacity:.5;transition:.18s;padding:0 2px}
+  .adrow .pdel:hover{color:#ff8b7d;opacity:1}
+  .search-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .search-input{flex:1;font-size:16px}
+  #searchWrap{overflow-y:auto;margin-top:4px;min-height:40px}
+  #searchWrap::-webkit-scrollbar{width:7px}
+  #searchWrap::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:8px}
+  .sres{display:flex;align-items:center;gap:11px;padding:10px 4px;border-bottom:1px solid var(--line);cursor:pointer;border-radius:8px}
+  .sres:last-child{border-bottom:none}
+  .sres:hover{background:rgba(255,255,255,.035)}
+  .stag{font-family:"JetBrains Mono",monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;padding:3px 0;border-radius:6px;border:1px solid var(--line);color:var(--muted);flex:none;width:62px;text-align:center}
+  .stag.project{color:#5b8cff;border-color:rgba(91,140,255,.35)}
+  .stag.email{color:#4ad6c0;border-color:rgba(74,214,192,.32)}
+  .stag.expense{color:#ffb547;border-color:rgba(255,181,71,.32)}
+  .stag.ad{color:#ff7eb6;border-color:rgba(255,126,182,.35)}
+  .sinfo{min-width:0;display:flex;flex-direction:column}
+  .stitle{font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ssub{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px}
+  /* Focus timer */
+  .tactions{flex:none;display:flex;align-items:center;gap:8px;margin-top:1px;margin-left:auto}
+  .tstart{flex:none;background:none;border:1px solid var(--line-strong);color:var(--muted);border-radius:7px;font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:4px 9px;cursor:pointer;opacity:.5;transition:.18s}
+  .task:hover .tstart{opacity:.85}
+  .tstart:hover{border-color:var(--accent);color:var(--accent);opacity:1}
+  .timer-card{width:100%;max-width:420px;display:flex;flex-direction:column;align-items:center;text-align:center;background:var(--panel);border:1px solid var(--line);border-radius:24px;padding:34px 28px 30px;box-shadow:var(--shadow);animation:rise .25s ease}
+  .timer-proj{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:8px;min-height:14px}
+  .timer-task{font-family:"Bricolage Grotesque";font-weight:800;font-size:21px;line-height:1.2;margin:10px 0 24px;max-width:340px}
+  .timer-ring{position:relative;width:220px;height:220px;margin-bottom:26px}
+  .timer-ring svg{transform:rotate(-90deg)}
+  .timer-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px}
+  .timer-time{font-family:"Bricolage Grotesque";font-weight:800;font-size:46px;letter-spacing:-.02em;line-height:1}
+  .timer-state{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+  .timer-controls{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+  .btn.ghost{background:none;border:1px solid var(--line-strong);color:var(--text)}
+  .btn.ghost:hover{border-color:var(--accent);color:var(--accent);filter:none;transform:none}
+  .qadd input.amt{flex:none;width:88px;min-width:0;text-align:right;font-family:"JetBrains Mono",monospace}
+  .exp{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 4px;border-bottom:1px solid var(--line)}
+  .exp:last-child{border-bottom:none}
+  .exp .ename{font-weight:600;font-size:14px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .exp .eright{display:flex;align-items:center;gap:10px;flex:none}
+  .exp .eamt{font-family:"JetBrains Mono",monospace;font-size:13px}
+  .exp .pdel{flex:none;background:none;border:none;color:var(--muted);font-size:17px;line-height:1;cursor:pointer;opacity:0;transition:.18s;padding:0 2px}
+  .exp:hover .pdel{opacity:.55}
+  .exp .pdel:hover{color:#ff8b7d;opacity:1}
+  #expWrap{overflow-y:auto;max-height:168px;padding-right:6px;margin-right:-6px}
+  #expWrap::-webkit-scrollbar{width:7px}
+  #expWrap::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:8px}
+  #expWrap::-webkit-scrollbar-track{background:transparent}
+  .empty.cleared{color:var(--accent)}
+  .proj{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 9px;border-bottom:1px solid var(--line);border-radius:9px;cursor:pointer;transition:background .15s,box-shadow .15s;user-select:none}
+  .proj:hover{background:rgba(255,255,255,.03)}
+  .proj.sel{background:rgba(214,255,63,.07);box-shadow:inset 2px 0 0 var(--accent)}
+  .proj.sel .pname{color:var(--accent)}
+  .proj:last-child{border-bottom:none}
+  .proj .left{display:flex;align-items:center;gap:11px;min-width:0}
+  .proj .pname{font-weight:600;font-size:14px}
+  .proj .status{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:3px 9px;border-radius:20px;border:1px solid var(--line);color:var(--muted)}
+  .proj .right{display:flex;align-items:center;gap:10px}
+  .proj .open{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted)}
+  .proj .pdel{flex:none;background:none;border:none;color:var(--muted);font-size:17px;line-height:1;cursor:pointer;opacity:0;transition:.18s;padding:0 2px}
+  .proj:hover .pdel{opacity:.55}
+  .proj .pdel:hover{color:#ff8b7d;opacity:1}
+  .padd-btn{flex:none;background:none;border:1px solid var(--line-strong);color:var(--muted);border-radius:7px;width:24px;height:24px;font-size:14px;line-height:1;cursor:pointer;opacity:.6;transition:.18s;display:flex;align-items:center;justify-content:center}
+  .proj:hover .padd-btn{opacity:.85}
+  .padd-btn:hover{border-color:var(--accent);color:var(--accent);opacity:1}
+  .proj-add{display:flex;flex-direction:column;gap:9px;padding:12px 4px 15px;border-bottom:1px solid var(--line)}
+  .proj-add textarea{min-height:62px}
+  .proj-add .mini{font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.04em;color:var(--muted);min-height:14px}
+  .proj-add .mini.err{color:#ff8b7d} .proj-add .mini.ok{color:var(--accent)}
+  .loading{position:fixed;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;color:var(--muted);font-family:"JetBrains Mono",monospace;font-size:13px;letter-spacing:.1em}
+</style>
+</head>
+<body>
+
+<div id="boot" class="loading">Connecting…</div>
+
+<div id="login" class="hidden">
+  <div class="card">
+    <div><span class="pulse"></span><span class="label">Studio HQ // Command Center</span></div>
+    <h1>Welcome back.</h1>
+    <p>Enter your email and we'll send you a one-tap sign-in link. No password to remember.</p>
+    <div class="field">
+      <input type="email" id="email" placeholder="you@email.com" autocomplete="email">
+      <button class="btn" id="sendLink">Send my magic link</button>
+    </div>
+    <div class="note" id="loginNote"></div>
+  </div>
+</div>
+
+<div id="app" class="wrap hidden">
+  <header>
+    <div>
+      <h1 class="greet" id="greet">Good morning.<span class="sub" id="dateLine"></span></h1>
+    </div>
+    <div class="topbtns">
+      <button class="signout" id="searchOpen">🔍 Search</button>
+      <button class="signout" id="adOpen">💡 Ad ideas</button>
+      <button class="signout" id="emailOpen">✉ Emails</button>
+      <button class="signout" id="signOut">Sign out</button>
+    </div>
+  </header>
+
+  <div class="plan">
+    <div class="plan-main">
+      <h2>What do you want to work on today?</h2>
+      <div class="hint">Tap the projects you want to work on, choose your hours, then hit Show my tasks.</div>
+      <div class="proj-head"><span class="lbl">Projects · tap to pick</span><button class="padd" id="toggleAdd">+ New</button></div>
+      <div class="addform" id="addForm">
+        <input type="text" id="apName" placeholder="Project name (e.g. Fitness App)">
+        <textarea id="apDesc" placeholder="Describe it — what is it, who's it for, what do you want to build? The more detail, the sharper the breakdown."></textarea>
+        <button class="btn" id="apCreate">✨ Break it down &amp; create</button>
+        <div class="mini" id="apNote">Describe the project and AI breaks it into steps.</div>
+      </div>
+      <div id="planProjects"></div>
+      <div class="controls">
+        <div class="hours">
+          <button class="hpick" data-h="1">1h</button>
+          <button class="hpick" data-h="2">2h</button>
+          <button class="hpick on" data-h="3">3h</button>
+          <button class="hpick" data-h="4">4h</button>
+          <button class="hpick" data-h="6">6h</button>
+        </div>
+        <button class="btn go" id="buildDay">Show my tasks</button>
+      </div>
+      <div class="pnote" id="planNote"></div>
+    </div>
+    <div class="plan-exp">
+      <div class="phead"><h2>Monthly expenses</h2><span class="count" id="expTotal"></span></div>
+      <div class="qadd">
+        <input type="text" id="expName" placeholder="Expense (e.g. Adobe)">
+        <input type="text" id="expAmount" inputmode="decimal" placeholder="0" class="amt">
+        <button class="chip" id="expAdd">+ Add</button>
+      </div>
+      <div id="expWrap"></div>
+    </div>
+  </div>
+
+  <section class="panel today">
+    <div class="phead"><h2>Today</h2><span class="count" id="todayCount"></span></div>
+    <div class="qadd">
+      <input type="text" id="newText" placeholder="Add a task or idea…">
+      <select id="newProject"></select>
+      <div class="qbtns">
+        <button class="chip" data-when="today">+ Today</button>
+      </div>
+    </div>
+    <div id="overdueWrap"></div>
+    <div id="todayWrap"></div>
+  </section>
+  <section class="panel hidden" id="binPanel">
+    <div class="phead"><h2>Recently done</h2><span class="count" id="binCount"></span></div>
+    <div class="binnote">Auto-clears an hour after you finish · tap the ✓ to bring one back.</div>
+    <div id="binWrap"></div>
+  </section>
+
+  <div class="modal hidden" id="emailModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2>Email vault</h2>
+        <button class="modal-x" id="emailClose" title="Close">&times;</button>
+      </div>
+      <div class="modal-sub">Your email addresses and what each one is for.</div>
+      <div class="qadd">
+        <input type="text" id="emUse" placeholder="What it's for (e.g. Bot accounts)">
+        <input type="email" id="emAddr" placeholder="name@email.com" autocomplete="off">
+        <button class="chip" id="emAdd">+ Add</button>
+      </div>
+      <div id="emWrap"></div>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="adModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2>Ad swipe file</h2>
+        <button class="modal-x" id="adClose" title="Close">&times;</button>
+      </div>
+      <div class="modal-sub">Great TikTok/IG ads to recreate for your product. Tick one off once you've remade it.</div>
+      <div class="qadd">
+        <input type="text" id="adIdea" placeholder="What's good about it / the idea">
+        <input type="text" id="adLink" placeholder="Paste the TikTok / Instagram link">
+        <button class="chip" id="adAdd">+ Add</button>
+      </div>
+      <div id="adWrap"></div>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="searchModal">
+    <div class="modal-card">
+      <div class="search-row">
+        <input type="text" id="searchInput" class="search-input" placeholder="Search tasks, projects, emails, expenses…" autocomplete="off">
+        <button class="modal-x" id="searchClose" title="Close">&times;</button>
+      </div>
+      <div id="searchWrap"></div>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="timerModal">
+    <div class="timer-card">
+      <div class="timer-proj" id="timerProj"></div>
+      <div class="timer-task" id="timerTask"></div>
+      <div class="timer-ring">
+        <svg width="220" height="220" viewBox="0 0 220 220">
+          <circle cx="110" cy="110" r="96" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="12"/>
+          <circle id="timerArc" cx="110" cy="110" r="96" fill="none" stroke="var(--accent)" stroke-width="12" stroke-linecap="round" stroke-dasharray="603.2" stroke-dashoffset="603.2" style="transition:stroke-dashoffset .9s linear"/>
+        </svg>
+        <div class="timer-center">
+          <div class="timer-time" id="timerTime">0:00</div>
+          <div class="timer-state" id="timerState">Focusing</div>
+        </div>
+      </div>
+      <div class="timer-controls">
+        <button class="btn ghost" id="timerPause">Pause</button>
+        <button class="btn ghost" id="timerStop">Stop</button>
+        <button class="btn" id="timerDone">✓ I'm finished</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const SUPABASE_URL = "https://glokxrwliqactesgkrqu.supabase.co";
+const SUPABASE_KEY = "sb_publishable_9m-pNuQjH14jcBkMkeQQzw_NaIhYlv6";
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const $ = s => document.querySelector(s);
+const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const checkSVG = '<svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#0b0c0f" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+let PROJECTS = [], TASKS = [], projMap = {}, EXPENSES = [], EMAILS = [], ADIDEAS = [];
+
+// Money: Swedish krona, e.g. "1 200 kr".
+const money = n => `${(Number(n)||0).toLocaleString("sv-SE",{maximumFractionDigits:2})} kr`;
+const parseAmount = s => { const v = parseFloat(String(s).replace(/\s/g,"").replace(",",".").replace(/[^0-9.]/g,"")); return isFinite(v) ? v : NaN; };
+let planSel = new Set();   // project ids selected for "Plan my day"
+let planHours = 3;
+let addOpen = null, addMsg = "", addCls = "mini";   // inline per-project "update steps" box
+
+// Task sizes: focus-session chunks. null est_minutes is treated as "focus".
+const SIZES = {
+  quick: { m:30,  label:"Quick", hint:"~30m" },
+  focus: { m:75,  label:"Focus", hint:"~1–1.5h" },
+  deep:  { m:180, label:"Deep",  hint:"~3h" },
+};
+const sizeOf = m => (m==null ? "focus" : m<=45 ? "quick" : m<=120 ? "focus" : "deep");
+
+const COLORS = ["#4ad6c0","#ff5a4d","#b07cff","#ffb547","#5b8cff","#ff7eb6","#7ee787","#56d4dd","#f2cc60","#d2a8ff"];
+
+const ymd = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const startOfToday = () => { const d=new Date(); d.setHours(0,0,0,0); return d; };
+const parseLocal = s => { const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); };
+const dayDiff = (a,b) => Math.round((a-b)/86400000);
+const esc = s => (s||"").replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const prioRank = p => p==="high"?0 : p==="low"?2 : 1;
+const slug = s => (s||"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,24) || "proj";
+
+// ---- Recurrence + dependency helpers ----
+const isDaily = t => t.recurrence === "daily";
+function doneToday(t){                                    // a daily task counts as done only for *today*
+  if(!t.done_at) return false;
+  const d = new Date(t.done_at); d.setHours(0,0,0,0);
+  return d.getTime() === startOfToday().getTime();
+}
+const doneNow = t => isDaily(t) ? doneToday(t) : !!t.done;   // recurring = "done for today", one-time = done forever
+function prereqDone(t){
+  if(!t.depends_on) return true;
+  const p = TASKS.find(x => x.id === t.depends_on);
+  return p ? doneNow(p) : true;                            // prerequisite gone → unblocked
+}
+const blocked = t => !prereqDone(t);                       // hide a task until its prerequisite is done
+
+// Turn AI step defs into task rows. Client-side ids let us wire depends_on (a 1-based index
+// into the returned steps) to the real prerequisite task id. base = step numbers already used.
+function buildSteps(stepDefs, project_id, base){
+  const ids = stepDefs.map(() => crypto.randomUUID());
+  return stepDefs.map((s,i) => {
+    const d = Number(s.depends_on);
+    const dep = (Number.isInteger(d) && d>=1 && d-1 < i) ? ids[d-1] : null;   // earlier steps only — no cycles
+    return {
+      id: ids[i],
+      text: `${base+i+1} · ${s.text}`,
+      project_id,
+      due_date: null,
+      priority: (base===0 && i===0) ? "high" : "normal",
+      est_minutes: SIZES[s.size]?.m ?? SIZES.focus.m,
+      recurrence: s.recurrence === "daily" ? "daily" : null,
+      depends_on: dep,
+    };
+  });
+}
+
+$("#sendLink").addEventListener("click", sendLink);
+$("#email").addEventListener("keydown", e => { if(e.key==="Enter") sendLink(); });
+$("#signOut").addEventListener("click", () => supabase.auth.signOut());
+
+async function sendLink(){
+  const email = $("#email").value.trim();
+  const note = $("#loginNote");
+  if(!email){ note.className="note err"; note.textContent="Pop in your email first."; return; }
+  $("#sendLink").disabled = true;
+  const { error } = await supabase.auth.signInWithOtp({ email, options:{ emailRedirectTo: location.href.split('#')[0] } });
+  $("#sendLink").disabled = false;
+  if(error){ note.className="note err"; note.textContent = error.message; }
+  else { note.className="note ok"; note.textContent = "Sent. Check your inbox and tap the link to come in."; }
+}
+
+supabase.auth.onAuthStateChange((_e, session) => route(session));
+const { data:{ session } } = await supabase.auth.getSession();
+route(session);
+
+function route(session){
+  $("#boot").classList.add("hidden");
+  if(session){ $("#login").classList.add("hidden"); $("#app").classList.remove("hidden"); setHead(); loadAll(); }
+  else { $("#app").classList.add("hidden"); $("#login").classList.remove("hidden"); }
+}
+
+function setHead(){
+  const now=new Date(), h=now.getHours();
+  const part = h<12?"morning" : h<18?"afternoon" : "evening";
+  $("#greet").childNodes[0].nodeValue = `Good ${part}. `;
+  $("#dateLine").textContent = `${DAYS[now.getDay()]} · ${now.getDate()} ${MONTHS[now.getMonth()]} ${now.getFullYear()}`;
+}
+
+async function loadAll(){
+  const { data:projects } = await supabase.from("projects").select("*").order("sort");
+  PROJECTS = projects || [];
+  projMap = Object.fromEntries(PROJECTS.map(p=>[p.id,p]));
+  const { data:tasks } = await supabase.from("tasks").select("*").order("created_at");
+  TASKS = tasks || [];
+  const { data:expenses } = await supabase.from("expenses").select("*").order("created_at");
+  EXPENSES = expenses || [];
+  const { data:emails } = await supabase.from("emails").select("*").order("created_at");
+  EMAILS = emails || [];
+  const { data:ads } = await supabase.from("ad_ideas").select("*").order("created_at");
+  ADIDEAS = ads || [];
+  // keep plan selection in sync with existing projects (default: all selected)
+  const ids = new Set(PROJECTS.map(p=>p.id));
+  planSel = new Set([...planSel].filter(id=>ids.has(id)));
+  if(planSel.size===0) planSel = new Set(PROJECTS.map(p=>p.id));
+  fillProjectSelect();
+  render();
+}
+
+/* ---------- Monthly expenses ---------- */
+async function addExpense(){
+  const name = $("#expName").value.trim();
+  const amount = parseAmount($("#expAmount").value);
+  if(!name || !isFinite(amount)) return;
+  $("#expName").value = ""; $("#expAmount").value = "";
+  const sort = (EXPENSES.reduce((m,e)=>Math.max(m, e.sort??0), -1)) + 1;
+  await supabase.from("expenses").insert({ name, amount, sort });
+  loadAll();
+}
+async function deleteExpense(id){
+  EXPENSES = EXPENSES.filter(e=>e.id!==id); renderExpenses();
+  await supabase.from("expenses").delete().eq("id", id);
+}
+function renderExpenses(){
+  const total = EXPENSES.reduce((s,e)=>s + (Number(e.amount)||0), 0);
+  $("#expTotal").textContent = EXPENSES.length ? `${money(total)} / mo` : "";
+  $("#expWrap").innerHTML = EXPENSES.length ? EXPENSES.map(e=>
+    `<div class="exp" data-id="${e.id}">
+       <span class="ename">${esc(e.name)}</span>
+       <span class="eright"><span class="eamt">${money(e.amount)}</span><button class="pdel" data-act="edel" title="Delete">&times;</button></span>
+     </div>`).join("")
+    : `<div class="empty">No expenses yet. Add your monthly costs above.</div>`;
+}
+$("#expAdd").addEventListener("click", addExpense);
+$("#expName").addEventListener("keydown", e => { if(e.key==="Enter") $("#expAmount").focus(); });
+$("#expAmount").addEventListener("keydown", e => { if(e.key==="Enter") addExpense(); });
+
+/* ---------- Email vault (modal) ---------- */
+function renderEmails(){
+  $("#emWrap").innerHTML = EMAILS.length ? EMAILS.map(e=>
+    `<div class="emrow" data-id="${e.id}" data-addr="${esc(e.address||"")}">
+       <div class="eminfo"><div class="emuse">${esc(e.label||"—")}</div><div class="emaddr">${esc(e.address||"")}</div></div>
+       <div class="emacts"><button class="linkbtn" data-act="emcopy">Copy</button><button class="pdel" data-act="emdel" title="Delete">&times;</button></div>
+     </div>`).join("")
+    : `<div class="empty">No emails saved yet. Add one above.</div>`;
+}
+async function addEmail(){
+  const label = $("#emUse").value.trim();
+  const address = $("#emAddr").value.trim();
+  if(!label && !address) return;
+  $("#emUse").value = ""; $("#emAddr").value = ""; $("#emUse").focus();
+  const sort = (EMAILS.reduce((m,e)=>Math.max(m, e.sort??0), -1)) + 1;
+  await supabase.from("emails").insert({ label, address, sort });
+  await loadAll();
+  renderEmails();
+}
+async function deleteEmail(id){
+  EMAILS = EMAILS.filter(e=>e.id!==id); renderEmails();
+  await supabase.from("emails").delete().eq("id", id);
+}
+async function copyEmail(addr, btn){
+  if(!addr) return;
+  try { await navigator.clipboard.writeText(addr); if(btn){ btn.textContent="Copied"; setTimeout(()=>{ btn.textContent="Copy"; }, 1200); } } catch(_){}
+}
+const openEmails  = () => { $("#emailModal").classList.remove("hidden"); renderEmails(); $("#emUse").focus(); };
+const closeEmails = () => $("#emailModal").classList.add("hidden");
+$("#emailOpen").addEventListener("click", openEmails);
+$("#emailClose").addEventListener("click", closeEmails);
+$("#emailModal").addEventListener("click", e => { if(e.target.id==="emailModal") closeEmails(); });
+document.addEventListener("keydown", e => { if(e.key==="Escape") closeEmails(); });
+$("#emAdd").addEventListener("click", addEmail);
+$("#emUse").addEventListener("keydown", e => { if(e.key==="Enter") $("#emAddr").focus(); });
+$("#emAddr").addEventListener("keydown", e => { if(e.key==="Enter") addEmail(); });
+$("#emWrap").addEventListener("click", e => {
+  const row = e.target.closest(".emrow"); if(!row) return;
+  const copyBtn = e.target.closest('[data-act="emcopy"]');
+  if(copyBtn){ copyEmail(row.dataset.addr, copyBtn); return; }
+  if(e.target.closest('[data-act="emdel"]')) deleteEmail(row.dataset.id);
+});
+
+/* ---------- Ad swipe file (modal) ---------- */
+function renderAds(){
+  $("#adWrap").innerHTML = ADIDEAS.length ? ADIDEAS.map(a=>{
+    const link = a.link ? `<a class="adlink" href="${esc(a.link)}" target="_blank" rel="noopener">${esc(a.link)}</a>` : "";
+    const copy = a.link ? `<button class="linkbtn" data-act="adcopy">Copy</button>` : "";
+    return `<div class="adrow ${a.done?'done':''}" data-id="${a.id}" data-link="${esc(a.link||"")}">
+      <button class="adcheck" data-act="adtoggle" title="Mark as recreated">${checkSVG}</button>
+      <div class="adinfo"><div class="adidea">${esc(a.idea||"—")}</div>${link}</div>
+      <div class="adacts">${copy}<button class="pdel" data-act="addel" title="Delete">&times;</button></div>
+    </div>`;
+  }).join("") : `<div class="empty">No ad ideas yet. Paste a TikTok/IG link and what's good about it.</div>`;
+}
+async function addAd(){
+  const idea = $("#adIdea").value.trim();
+  const link = $("#adLink").value.trim();
+  if(!idea && !link) return;
+  $("#adIdea").value = ""; $("#adLink").value = ""; $("#adIdea").focus();
+  const sort = (ADIDEAS.reduce((m,a)=>Math.max(m, a.sort??0), -1)) + 1;
+  await supabase.from("ad_ideas").insert({ idea, link, sort });
+  await loadAll();
+  renderAds();
+}
+async function deleteAd(id){
+  ADIDEAS = ADIDEAS.filter(a=>a.id!==id); renderAds();
+  await supabase.from("ad_ideas").delete().eq("id", id);
+}
+async function toggleAd(id){
+  const a = ADIDEAS.find(x=>x.id===id); if(!a) return;
+  a.done = !a.done; renderAds();
+  await supabase.from("ad_ideas").update({ done:a.done }).eq("id", id);
+}
+function copyAd(link, btn){
+  if(!link) return;
+  navigator.clipboard?.writeText(link).catch(()=>{});
+  if(btn){ btn.textContent="Copied"; setTimeout(()=>{ btn.textContent="Copy"; }, 1200); }
+}
+const openAds  = () => { $("#adModal").classList.remove("hidden"); renderAds(); $("#adIdea").focus(); };
+const closeAds = () => $("#adModal").classList.add("hidden");
+$("#adOpen").addEventListener("click", openAds);
+$("#adClose").addEventListener("click", closeAds);
+$("#adModal").addEventListener("click", e => { if(e.target.id==="adModal") closeAds(); });
+document.addEventListener("keydown", e => { if(e.key==="Escape") closeAds(); });
+$("#adAdd").addEventListener("click", addAd);
+$("#adIdea").addEventListener("keydown", e => { if(e.key==="Enter") $("#adLink").focus(); });
+$("#adLink").addEventListener("keydown", e => { if(e.key==="Enter") addAd(); });
+$("#adWrap").addEventListener("click", e => {
+  const row = e.target.closest(".adrow"); if(!row) return;
+  if(e.target.closest('[data-act="adtoggle"]')) { toggleAd(row.dataset.id); return; }
+  const copyBtn = e.target.closest('[data-act="adcopy"]');
+  if(copyBtn){ copyAd(row.dataset.link, copyBtn); return; }
+  if(e.target.closest('[data-act="addel"]')) deleteAd(row.dataset.id);
+});
+
+/* ---------- Search (modal) ---------- */
+function taskWhere(t){
+  if(isDaily(t)) return "Daily";
+  if(t.done) return "Done";
+  if(blocked(t)) return "Locked";
+  if(!t.due_date) return "Backlog";
+  const diff = dayDiff(parseLocal(t.due_date), startOfToday());
+  return diff<0 ? "Overdue" : diff===0 ? "Today" : "Scheduled";
+}
+function searchResults(q){
+  q = q.trim().toLowerCase(); if(!q) return [];
+  const out = [];
+  PROJECTS.forEach(p=>{ if((p.name||"").toLowerCase().includes(q)) out.push({type:"project", id:p.id, title:p.name, sub:p.status||"Project"}); });
+  TASKS.forEach(t=>{ if((t.text||"").toLowerCase().includes(q)){ const pr=projMap[t.project_id]; out.push({type:"task", id:t.id, title:t.text, sub:`${pr?pr.name:"—"} · ${taskWhere(t)}`}); } });
+  EMAILS.forEach(e=>{ if(`${e.label} ${e.address}`.toLowerCase().includes(q)) out.push({type:"email", id:e.id, title:e.label||e.address, sub:e.address, addr:e.address}); });
+  EXPENSES.forEach(x=>{ if((x.name||"").toLowerCase().includes(q)) out.push({type:"expense", id:x.id, title:x.name, sub:`${money(x.amount)} / mo`}); });
+  ADIDEAS.forEach(a=>{ if(`${a.idea} ${a.link}`.toLowerCase().includes(q)) out.push({type:"ad", id:a.id, title:a.idea||a.link, sub:a.link||"ad idea", link:a.link}); });
+  return out.slice(0, 40);
+}
+function renderSearch(){
+  const q = $("#searchInput").value;
+  const res = searchResults(q);
+  $("#searchWrap").innerHTML = res.length
+    ? res.map(r=>`<div class="sres" data-type="${r.type}" data-id="${r.id}"${r.addr?` data-addr="${esc(r.addr)}"`:""}${r.link?` data-link="${esc(r.link)}"`:""}>
+        <span class="stag ${r.type}">${r.type}</span>
+        <span class="sinfo"><span class="stitle">${esc(r.title)}</span><span class="ssub">${esc(r.sub)}</span></span>
+      </div>`).join("")
+    : `<div class="empty">${q.trim() ? "No matches." : "Type to search tasks, projects, emails &amp; expenses…"}</div>`;
+}
+const openSearch  = () => { $("#searchModal").classList.remove("hidden"); $("#searchInput").value=""; renderSearch(); $("#searchInput").focus(); };
+const closeSearch = () => $("#searchModal").classList.add("hidden");
+$("#searchOpen").addEventListener("click", openSearch);
+$("#searchClose").addEventListener("click", closeSearch);
+$("#searchModal").addEventListener("click", e => { if(e.target.id==="searchModal") closeSearch(); });
+$("#searchInput").addEventListener("input", renderSearch);
+document.addEventListener("keydown", e => {
+  if((e.metaKey||e.ctrlKey) && e.key.toLowerCase()==="k"){ e.preventDefault(); openSearch(); }
+  else if(e.key==="Escape") closeSearch();
+});
+$("#searchWrap").addEventListener("click", e => {
+  const row = e.target.closest(".sres"); if(!row) return;
+  if(row.dataset.type==="project"){
+    planSel.add(row.dataset.id); render(); closeSearch(); window.scrollTo({top:0, behavior:"smooth"});
+  } else if(row.dataset.type==="email"){
+    if(row.dataset.addr) navigator.clipboard?.writeText(row.dataset.addr).catch(()=>{});
+    const sub = row.querySelector(".ssub"); if(sub){ const o = sub.textContent; sub.textContent = "Copied ✓"; setTimeout(()=>{ sub.textContent = o; }, 1200); }
+  } else if(row.dataset.type==="ad"){
+    if(row.dataset.link) window.open(row.dataset.link, "_blank", "noopener");
+  }
+});
+
+/* ---------- Focus timer ---------- */
+const CIRC = 603.2;
+let TIMER = { id:null, target:0, elapsed:0, running:false, int:null };
+const fmtClock = sec => { const s=Math.abs(Math.round(sec)); return `${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`; };
+function timerPaint(){
+  const remaining = TIMER.target - TIMER.elapsed, over = remaining < 0;
+  $("#timerTime").textContent = (over?"+":"") + fmtClock(remaining);
+  const prog = TIMER.target ? Math.min(TIMER.elapsed/TIMER.target, 1) : 0;
+  const arc = $("#timerArc");
+  arc.style.strokeDashoffset = CIRC*(1-prog);
+  arc.style.stroke = over ? "#ff8b7d" : "var(--accent)";
+  $("#timerState").textContent = !TIMER.running ? "Paused" : over ? "Overtime — finish when ready" : "Focusing";
+}
+function startTimer(id){
+  const t = TASKS.find(x=>x.id===id); if(!t) return;
+  if(TIMER.int) clearInterval(TIMER.int);
+  const pr = projMap[t.project_id];
+  TIMER = { id, target:(t.est_minutes||75)*60, elapsed:0, running:true, int:null };
+  $("#timerProj").innerHTML = pr ? `<span class="dot" style="background:${pr.color};width:8px;height:8px;border-radius:50%"></span>${esc(pr.name)}` : "";
+  $("#timerTask").textContent = t.text;
+  $("#timerPause").textContent = "Pause";
+  $("#timerModal").classList.remove("hidden");
+  $("#timerArc").style.strokeDashoffset = CIRC;
+  timerPaint();
+  TIMER.int = setInterval(()=>{ if(TIMER.running){ TIMER.elapsed++; timerPaint(); } }, 1000);
+}
+function stopTimer(){
+  if(TIMER.int) clearInterval(TIMER.int);
+  TIMER = { id:null, target:0, elapsed:0, running:false, int:null };
+  $("#timerModal").classList.add("hidden");
+}
+function pauseTimer(){
+  TIMER.running = !TIMER.running;
+  $("#timerPause").textContent = TIMER.running ? "Pause" : "Resume";
+  timerPaint();
+}
+async function finishTimer(){
+  const id = TIMER.id; stopTimer();
+  const t = id && TASKS.find(x=>x.id===id);
+  if(t && !doneNow(t)) await toggle(id);   // complete it (one-time → bin, daily → done today)
+}
+$("#timerStop").addEventListener("click", stopTimer);
+$("#timerPause").addEventListener("click", pauseTimer);
+$("#timerDone").addEventListener("click", finishTimer);
+
+function fillProjectSelect(){
+  $("#newProject").innerHTML = PROJECTS.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join("");
+}
+
+document.querySelectorAll(".chip").forEach(c => c.addEventListener("click", () => addTask(c.dataset.when)));
+$("#newText").addEventListener("keydown", e => { if(e.key==="Enter") addTask("today"); });
+
+async function addTask(when){
+  const text = $("#newText").value.trim();
+  if(!text) return;
+  const due = when==="today" ? ymd(startOfToday()) : null;
+  const project_id = $("#newProject").value || null;
+  $("#newText").value = "";
+  await supabase.from("tasks").insert({ text, project_id, due_date:due, priority:"normal", est_minutes:SIZES.focus.m });
+  loadAll();
+}
+
+async function toggle(id){
+  const t = TASKS.find(x=>x.id===id); if(!t) return;
+  if(isDaily(t)){
+    t.done = false;                                          // a daily task is never "done forever"
+    t.done_at = doneToday(t) ? null : new Date().toISOString();   // toggle just today's completion
+  } else {
+    t.done = !t.done;
+    t.done_at = t.done ? new Date().toISOString() : null;
+  }
+  render();
+  await supabase.from("tasks").update({ done:t.done, done_at:t.done_at }).eq("id", id);
+}
+async function del(id){
+  TASKS = TASKS.filter(t=>t.id!==id); render();
+  await supabase.from("tasks").delete().eq("id", id);
+}
+// Restore a binned task: un-complete it so it returns to its normal spot.
+async function restore(id){
+  const t = TASKS.find(x=>x.id===id); if(!t) return;
+  t.done = false; t.done_at = null; render();
+  await supabase.from("tasks").update({ done:false, done_at:null }).eq("id", id);
+}
+// Permanently clear one-time tasks finished more than an hour ago (the bin's grace period).
+async function purgeBin(){
+  const cutoff = Date.now() - 3600000;
+  const ids = TASKS.filter(t => !isDaily(t) && t.done && t.done_at && new Date(t.done_at).getTime() < cutoff).map(t=>t.id);
+  if(!ids.length) return;
+  TASKS = TASKS.filter(t => !ids.includes(t.id)); render();
+  await supabase.from("tasks").delete().in("id", ids);
+}
+setInterval(purgeBin, 60000);
+
+/* ---------- Projects: add (with blueprint) + delete (cascade) ---------- */
+$("#toggleAdd").addEventListener("click", () => {
+  const f = $("#addForm"); f.classList.toggle("open");
+  if(f.classList.contains("open")) $("#apName").focus();
+});
+$("#apName").addEventListener("keydown", e => { if(e.key==="Enter") createProject(); });
+$("#apCreate").addEventListener("click", createProject);
+
+const RESET_NOTE = "Describe the project and AI breaks it into tailored steps.";
+
+async function aiBreakdown(name, description, current){
+  const body = { name, description };
+  if(Array.isArray(current) && current.length) body.current = current;
+  const { data, error } = await supabase.functions.invoke("project-breakdown", { body });
+  let payload = data;
+  if(error){
+    try { payload = await error.context.json(); } catch { payload = null; }
+    if(!payload) throw new Error(error.message || "request failed");
+  }
+  if(payload?.error) throw new Error(payload.error);
+  if(!Array.isArray(payload?.steps) || !payload.steps.length) throw new Error("no steps returned");
+  return { steps: payload.steps, status: (payload.status || "").trim() };
+}
+
+async function createProject(){
+  const name = $("#apName").value.trim();
+  const desc = $("#apDesc").value.trim();
+  const note = $("#apNote");
+  if(!name){ note.className="mini err"; note.textContent="Give the project a name first."; return; }
+  if(!desc){ note.className="mini err"; note.textContent="Describe the project so AI can break it down."; return; }
+
+  $("#apCreate").disabled = true;
+
+  // Steps come from AI, tailored to the description.
+  let stepDefs, status;
+  note.className="mini"; note.textContent="✨ Breaking it down with AI…";
+  try {
+    const r = await aiBreakdown(name, desc);
+    stepDefs = r.steps; status = r.status || "";
+  } catch(e){
+    $("#apCreate").disabled = false;
+    note.className="mini err";
+    note.textContent = `AI couldn't break it down (${String(e.message||e).slice(0,80)}). Try again or tweak the description.`;
+    return;
+  }
+
+  // unique key + unused colour + next sort
+  let key = slug(name); const existing = new Set(PROJECTS.map(p=>p.key));
+  if(existing.has(key)){ let n=2; while(existing.has(`${key}-${n}`)) n++; key = `${key}-${n}`; }
+  const color = COLORS.find(c => !PROJECTS.some(p=>p.color===c)) || COLORS[PROJECTS.length % COLORS.length];
+  const sort = (PROJECTS.reduce((m,p)=>Math.max(m, p.sort??0), -1)) + 1;
+
+  const { data:proj, error } = await supabase.from("projects")
+    .insert({ key, name, status, color, sort, description: desc }).select().single();
+  if(error || !proj){ $("#apCreate").disabled=false; note.className="mini err"; note.textContent = error?.message || "Couldn't create that."; return; }
+
+  if(stepDefs.length){
+    await supabase.from("tasks").insert(buildSteps(stepDefs, proj.id, 0));
+  }
+
+  $("#apCreate").disabled = false;
+  $("#apName").value = ""; $("#apDesc").value = "";
+  $("#addForm").classList.remove("open");
+  const made = stepDefs.length;
+  note.className="mini ok"; note.textContent = made ? `Created with ${made} step${made>1?"s":""}.` : "Created.";
+  setTimeout(()=>{ note.className="mini"; note.textContent=RESET_NOTE; }, 4500);
+  await loadAll();
+}
+
+async function deleteProject(id){
+  const p = projMap[id]; if(!p) return;
+  const n = TASKS.filter(t=>t.project_id===id).length;
+  const msg = n ? `Delete "${p.name}" and its ${n} task${n>1?"s":""}? This can't be undone.`
+                : `Delete "${p.name}"? This can't be undone.`;
+  if(!confirm(msg)) return;
+  await supabase.from("tasks").delete().eq("project_id", id);
+  await supabase.from("projects").delete().eq("id", id);
+  planSel.delete(id);
+  if(addOpen===id) addOpen = null;
+  await loadAll();
+}
+
+function setAddMsg(msg, cls="mini"){
+  addMsg = msg; addCls = cls;
+  const n = $("#paNote"); if(n){ n.className = cls; n.textContent = msg; }
+}
+
+// One box to update a project: describe what to add, remove, or change and AI revises the steps.
+// The AI sees the current open steps so it can keep, drop, or add. Done & scheduled steps are untouched.
+async function updateProject(id){
+  const p = projMap[id]; if(!p) return;
+  const desc = $("#paDesc")?.value.trim();
+  if(!desc){ setAddMsg("Tell me what to add, remove, or change.", "mini err"); return; }
+  const btn = $("#paGo"); if(btn) btn.disabled = true;
+  setAddMsg("✨ Updating the steps with AI…");
+
+  // The editable steps: this project's open (not-done, unscheduled) tasks, minus the "N · " prefix.
+  const openSteps = TASKS.filter(t=>t.project_id===id && !t.done && !t.due_date)
+                         .map(t => t.text.replace(/^\d+\s*·\s*/, ""));
+  let r;
+  try { r = await aiBreakdown(p.name, desc, openSteps); }
+  catch(e){
+    if(btn) btn.disabled = false;
+    setAddMsg(`AI couldn't update it (${String(e.message||e).slice(0,80)}).`, "mini err");
+    return;
+  }
+
+  // Swap the open steps for the AI's updated list; keep done & scheduled ones.
+  await supabase.from("projects").update({ status: r.status || p.status || "" }).eq("id", id);
+  await supabase.from("tasks").delete().eq("project_id", id).eq("done", false).is("due_date", null);
+  const kept = TASKS.filter(t=>t.project_id===id && (t.done || t.due_date));
+  const base = kept.reduce((m,t)=>{ const n=/^(\d+)\s*·/.exec(t.text); return n ? Math.max(m, Number(n[1])) : m; }, 0);
+  const steps = buildSteps(r.steps, id, base);
+  if(steps.length) await supabase.from("tasks").insert(steps);
+
+  const made = steps.length;
+  if($("#paDesc")) $("#paDesc").value = "";
+  addMsg = `Updated — ${made} step${made!==1?"s":""} now${kept.length?", kept "+kept.length+" done/scheduled":""}.`;
+  addCls = "mini ok";
+  await loadAll();
+  setTimeout(()=>{ addMsg = ""; addCls = "mini"; const n=$("#paNote"); if(n) n.textContent=""; }, 5000);
+}
+
+/* ---------- Plan my day ---------- */
+$(".hours").addEventListener("click", e => {
+  const b = e.target.closest(".hpick"); if(!b) return;
+  planHours = Number(b.dataset.h);
+  document.querySelectorAll(".hpick").forEach(x=>x.classList.toggle("on", x===b));
+});
+$("#buildDay").addEventListener("click", buildDay);
+
+// Projects live in one place now: tap a row to pick it for "Show my tasks",
+// use ✎ to add/remove/change its steps, × to delete, + New to create.
+function renderProjects(){
+  const active = TASKS.filter(t=>!t.done);
+  $("#planProjects").innerHTML = PROJECTS.length ? PROJECTS.map(p=>{
+    const open = active.filter(t=>t.project_id===p.id).length;
+    const st = p.status ? `<span class="status">${esc(p.status)}</span>` : "";
+    const sel = planSel.has(p.id) ? " sel" : "";
+    const row = `<div class="proj${sel}" data-pid="${p.id}" title="Tap to pick for today">
+      <div class="left"><span class="dot" style="background:${p.color}"></span><span class="pname">${esc(p.name)}</span>${st}</div>
+      <div class="right"><span class="open">${open} open</span><button class="padd-btn" data-act="padd" title="Add, remove or change steps">✎</button><button class="pdel" data-act="pdel" title="Delete project">&times;</button></div>
+    </div>`;
+    let form = "";
+    if(p.id===addOpen){
+      form = `<div class="proj-add">
+        <textarea id="paDesc" placeholder="What to add, remove or change for ${esc(p.name)}? e.g. “add a step for thumbnails” or “drop the bug-check step”. AI updates the list."></textarea>
+        <button class="btn" id="paGo" data-act="pago" data-pid="${p.id}">✨ Break it down &amp; add</button>
+        <div class="${addCls}" id="paNote">${esc(addMsg)}</div>
+      </div>`;
+    }
+    return row + form;
+  }).join("") : `<div class="empty">No projects yet. Hit “+ New” to add one.</div>`;
+}
+
+// Greedy: fill a per-project minute budget, preferring the biggest task that fits.
+function planProject(pool, budget){
+  const items = [...pool].sort((a,b)=>a.m-b.m);
+  const chosen=[]; let rem=budget;
+  for(;;){
+    let pick=null;
+    for(let i=items.length-1;i>=0;i--){ if(items[i].m <= rem*1.25){ pick=items.splice(i,1)[0]; break; } }
+    if(!pick) break;
+    chosen.push(pick); rem -= pick.m;
+    if(rem < 25) break;
+  }
+  if(!chosen.length && items.length) chosen.push(items[0]); // nothing fit cleanly — give the smallest as a starter
+  return chosen;
+}
+
+async function buildDay(){
+  const note = $("#planNote");
+  const projs = [...planSel];
+  if(!projs.length){ note.innerHTML = `<span class="msg">Pick at least one project up top.</span>`; return; }
+  const keep = new Set(projs);
+  const totalMin = planHours*60;
+  const per = Math.round(totalMin / projs.length);
+  const today = ymd(startOfToday());
+
+  // Today should reflect ONLY the projects you picked: send back any one-time task
+  // currently on today that belongs to a project you didn't select.
+  const drop = TASKS.filter(t => !t.done && !isDaily(t) && t.due_date===today && t.project_id && !keep.has(t.project_id))
+                    .map(t=>t.id);
+
+  // Pull fresh backlog tasks from the picked projects to fill the time.
+  const pickedIds = []; const usedProjects = new Set();
+  projs.forEach(pid=>{
+    const pool = TASKS.filter(t=>!t.done && t.project_id===pid && !t.due_date && !isDaily(t) && !blocked(t))
+                      .map(t=>({ id:t.id, m: t.est_minutes ?? SIZES.focus.m }));
+    const chosen = planProject(pool, per);
+    chosen.forEach(c=>{ pickedIds.push(c.id); usedProjects.add(pid); });
+  });
+
+  if(!pickedIds.length && !drop.length){
+    note.innerHTML = `<span class="msg">Nothing in those projects to pull from yet — break a project down or drop in some ideas first.</span>`;
+    return;
+  }
+  $("#buildDay").disabled = true;
+  if(drop.length)       await supabase.from("tasks").update({ due_date:null  }).in("id", drop);
+  if(pickedIds.length)  await supabase.from("tasks").update({ due_date:today }).in("id", pickedIds);
+  $("#buildDay").disabled = false;
+
+  // Count everything now on today for the picked projects (kept + newly added).
+  const onIds = new Set(pickedIds); const onProjects = new Set(usedProjects);
+  TASKS.forEach(t=>{ if(!t.done && !isDaily(t) && t.due_date===today && keep.has(t.project_id) && !drop.includes(t.id)){ onIds.add(t.id); onProjects.add(t.project_id); } });
+  const n = onIds.size;
+  note.innerHTML = `<span class="msg ok">${n? `On today: ${n} task${n>1?"s":""} across ${onProjects.size} project${onProjects.size>1?"s":""}.` : "Cleared — nothing to pull for those projects."}</span>`
+                 + `<button class="linkbtn" id="resetDay">Clear today's plan</button>`;
+  $("#resetDay").addEventListener("click", resetDay);
+  await loadAll();
+}
+
+async function resetDay(){
+  const today = ymd(startOfToday());
+  const ids = TASKS.filter(t=>!t.done && t.due_date===today).map(t=>t.id);
+  if(!ids.length) return;
+  await supabase.from("tasks").update({ due_date:null }).in("id", ids);
+  $("#planNote").innerHTML = `<span class="msg">Cleared — moved ${ids.length} unfinished task${ids.length>1?"s":""} back to the backlog.</span>`;
+  await loadAll();
+}
+
+/* ---------- Task / render ---------- */
+function taskHTML(t, idx){
+  const p = projMap[t.project_id] || { name:"—", color:"#5b8cff" };
+  const done = doneNow(t);
+  const prio = t.priority==="high" ? `<span class="prio high">high</span>` : "";
+  const sk = sizeOf(t.est_minutes);                 // only flag the non-default sizes
+  const size = sk==="focus" ? "" : `<span class="size ${sk}" title="${SIZES[sk].hint}">${SIZES[sk].label}</span>`;
+  const daily = isDaily(t) ? `<span class="size daily" title="Resets every day">Daily</span>` : "";
+  // Daily tasks aren't individually deletable — they go only via the project or a prompt rebuild.
+  const delBtn = isDaily(t) ? "" : `<button class="del" data-act="del" title="Delete">&times;</button>`;
+  const startBtn = done ? "" : `<button class="tstart" data-act="start" title="Start a focus timer">Start</button>`;
+  return `<div class="task ${done?'done':''}" data-id="${t.id}" style="animation-delay:${idx*40}ms">
+    <div class="box" data-act="toggle">${checkSVG}</div>
+    <div class="tbody" data-act="toggle">
+      <div class="ttext">${esc(t.text)}</div>
+      <div class="meta"><span class="tag"><span class="dot" style="background:${p.color}"></span>${esc(p.name)}</span>${daily}${size}${prio}</div>
+    </div>
+    <div class="tactions">${delBtn}${startBtn}</div>
+  </div>`;
+}
+
+// Bin rows: completed one-time tasks waiting to auto-clear. Tap the ✓ to restore.
+function binHTML(t){
+  const p = projMap[t.project_id] || { name:"—", color:"#5b8cff" };
+  return `<div class="task done bin" data-id="${t.id}">
+    <div class="box" data-act="restore" title="Restore">${checkSVG}</div>
+    <div class="tbody"><div class="ttext">${esc(t.text)}</div>
+      <div class="meta"><span class="tag"><span class="dot" style="background:${p.color}"></span>${esc(p.name)}</span></div>
+    </div>
+    <button class="del" data-act="del" title="Delete now">&times;</button>
+  </div>`;
+}
+
+function render(){
+  const today = startOfToday();
+  TASKS.forEach(t => { t._d = t.due_date ? parseLocal(t.due_date) : null; });
+
+  // Hide anything still locked behind an unfinished prerequisite.
+  const visible = TASKS.filter(t => !blocked(t));
+
+  const overdue   = visible.filter(t => !isDaily(t) && !t.done && t._d && dayDiff(t._d,today)<0)
+                           .sort((a,b)=>prioRank(a.priority)-prioRank(b.priority));
+  const todayOne  = visible.filter(t => !isDaily(t) && !t.done && t._d && dayDiff(t._d,today)===0)
+                           .sort((a,b)=>prioRank(a.priority)-prioRank(b.priority));
+  const daily     = visible.filter(t => isDaily(t))            // auto-show every day, once unlocked
+                           .sort((a,b)=>(doneToday(a)-doneToday(b)));
+  // Bin: finished one-time tasks, newest first. They auto-clear ~1h after done_at (see purgeBin).
+  const bin       = TASKS.filter(t => !isDaily(t) && t.done)
+                         .sort((a,b)=> new Date(b.done_at||0) - new Date(a.done_at||0));
+
+  let i=0;
+  $("#overdueWrap").innerHTML = overdue.length
+    ? `<div class="section-sub over">Carried over from before</div>` + overdue.map(t=>taskHTML(t,i++)).join("") : "";
+
+  let html = "";
+  if(todayOne.length){
+    html += overdue.length ? `<div class="section-sub">Today</div>` : "";
+    html += todayOne.map(t=>taskHTML(t,i++)).join("");
+  }
+  if(daily.length){
+    html += `<div class="section-sub">Every day</div>` + daily.map(t=>taskHTML(t,i++)).join("");
+  }
+  if(!html && !overdue.length){
+    html = `<div class="empty cleared">Nothing lined up yet. Pick projects above and hit “Show my tasks”.</div>`;
+  }
+  $("#todayWrap").innerHTML = html;
+
+  // Progress: count today's finished work (one-time done today + daily done today) against the rest.
+  const finishedToday = bin.filter(doneToday).length + daily.filter(doneToday).length;
+  const total = overdue.length + todayOne.length + bin.filter(doneToday).length + daily.length;
+  $("#todayCount").textContent = total ? `${finishedToday}/${total} done` : "";
+
+  renderProjects();
+
+  $("#binPanel").classList.toggle("hidden", bin.length===0);
+  $("#binCount").textContent = bin.length ? bin.length+"" : "";
+  $("#binWrap").innerHTML = bin.map(binHTML).join("");
+
+  renderExpenses();
+}
+
+$("#app").addEventListener("click", e => {
+  const goBtn = e.target.closest('[data-act="pago"]');
+  if(goBtn){ updateProject(goBtn.dataset.pid); return; }
+  const expEl = e.target.closest(".exp");
+  if(expEl && e.target.closest('[data-act="edel"]')){ deleteExpense(expEl.dataset.id); return; }
+  const projEl = e.target.closest(".proj");
+  if(projEl && e.target.closest('[data-act="pdel"]')){ deleteProject(projEl.dataset.pid); return; }
+  if(projEl && e.target.closest('[data-act="padd"]')){
+    const pid = projEl.dataset.pid;
+    addOpen = addOpen===pid ? null : pid;   // toggle the update box
+    addMsg = ""; addCls = "mini";
+    render();
+    if(addOpen) $("#paDesc")?.focus();
+    return;
+  }
+  // Tapping the project row itself toggles it for "Show my tasks".
+  if(projEl){
+    const pid = projEl.dataset.pid;
+    if(planSel.has(pid)) planSel.delete(pid); else planSel.add(pid);
+    render();
+    return;
+  }
+  const taskEl = e.target.closest(".task"); if(!taskEl) return;
+  const id = taskEl.dataset.id;
+  const act = e.target.closest("[data-act]")?.dataset.act;
+  if(act==="del") del(id);
+  else if(act==="restore") restore(id);
+  else if(act==="start") startTimer(id);
+  else if(act==="toggle") toggle(id);
+});
+</script>
+</body>
+</html>
