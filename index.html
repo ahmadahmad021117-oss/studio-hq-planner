@@ -144,6 +144,28 @@
   .emrow .emacts{display:flex;align-items:center;gap:10px;flex:none}
   .emrow .pdel{flex:none;background:none;border:none;color:var(--muted);font-size:17px;line-height:1;cursor:pointer;opacity:.5;transition:.18s;padding:0 2px}
   .emrow .pdel:hover{color:#ff8b7d;opacity:1}
+  .soc-create{padding-bottom:12px;margin-bottom:6px;border-bottom:1px solid var(--line)}
+  .soc-form{padding:4px 0 14px;margin-bottom:6px;border-bottom:1px solid var(--line)}
+  .soc-fields{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+  .soc-field{display:flex;align-items:center;gap:10px}
+  .soc-field input{flex:1}
+  .soc-plat{flex:none;width:84px;font-size:12px;font-weight:600;letter-spacing:.02em}
+  .soc-plat.tiktok{color:#4ad6c0}
+  .soc-plat.instagram{color:#ff7eb6}
+  .soc-plat.youtube{color:#ff5c5c}
+  .soc-plat.x{color:#dfe3ec}
+  .soc-formbtns{display:flex;align-items:center;gap:14px;margin-top:12px}
+  .socrow{padding:12px 2px;border-bottom:1px solid var(--line)}
+  .socrow:last-child{border-bottom:none}
+  .socrow .sochead{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .socrow .socname{font-weight:600;font-size:15px}
+  .socrow .socacts{display:flex;align-items:center;gap:10px;flex:none}
+  .socrow .pdel{flex:none;background:none;border:none;color:var(--muted);font-size:17px;line-height:1;cursor:pointer;opacity:.5;transition:.18s;padding:0 2px}
+  .socrow .pdel:hover{color:#ff8b7d;opacity:1}
+  .socrow .sochandles{display:flex;flex-direction:column;gap:5px;margin-top:8px}
+  .sochandle{display:flex;align-items:center;gap:10px;font-size:13px}
+  .sochandle .socat{font-family:"JetBrains Mono",monospace;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .sochandle .socat.empty-h{opacity:.4;font-style:italic}
   .adrow{display:flex;align-items:flex-start;gap:11px;padding:12px 2px;border-bottom:1px solid var(--line)}
   .adrow:last-child{border-bottom:none}
   .adcheck{flex:none;width:20px;height:20px;border-radius:6px;border:2px solid var(--line-strong);background:none;cursor:pointer;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.18s;padding:0}
@@ -171,6 +193,7 @@
   .stag.email{color:#4ad6c0;border-color:rgba(74,214,192,.32)}
   .stag.expense{color:#ffb547;border-color:rgba(255,181,71,.32)}
   .stag.ad{color:#ff7eb6;border-color:rgba(255,126,182,.35)}
+  .stag.social{color:#9b8cff;border-color:rgba(155,140,255,.35)}
   .sinfo{min-width:0;display:flex;flex-direction:column}
   .stitle{font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .ssub{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px}
@@ -253,6 +276,7 @@
       <button class="signout" id="searchOpen">🔍 Search</button>
       <button class="signout" id="adOpen">💡 Ad ideas</button>
       <button class="signout" id="emailOpen">✉ Emails</button>
+      <button class="signout" id="socialOpen">📱 Social media</button>
       <button class="signout" id="signOut">Sign out</button>
     </div>
   </header>
@@ -326,6 +350,33 @@
     </div>
   </div>
 
+  <div class="modal hidden" id="socialModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2>Social media</h2>
+        <button class="modal-x" id="socialClose" title="Close">&times;</button>
+      </div>
+      <div class="modal-sub">Your accounts and their handles across each platform.</div>
+      <div class="soc-create">
+        <button class="chip" id="socNew">+ Create</button>
+      </div>
+      <div class="soc-form hidden" id="socForm">
+        <input type="text" id="socName" placeholder="What should we call it? (e.g. Fitness App)" autocomplete="off">
+        <div class="soc-fields">
+          <label class="soc-field"><span class="soc-plat tiktok">TikTok</span><input type="text" id="socTiktok" placeholder="@username" autocomplete="off"></label>
+          <label class="soc-field"><span class="soc-plat instagram">Instagram</span><input type="text" id="socInstagram" placeholder="@username" autocomplete="off"></label>
+          <label class="soc-field"><span class="soc-plat youtube">YouTube</span><input type="text" id="socYoutube" placeholder="@channel" autocomplete="off"></label>
+          <label class="soc-field"><span class="soc-plat x">X</span><input type="text" id="socX" placeholder="@username" autocomplete="off"></label>
+        </div>
+        <div class="soc-formbtns">
+          <button class="btn" id="socSave">Save</button>
+          <button class="linkbtn" id="socCancel">Cancel</button>
+        </div>
+      </div>
+      <div id="socWrap"></div>
+    </div>
+  </div>
+
   <div class="modal hidden" id="adModal">
     <div class="modal-card">
       <div class="modal-head">
@@ -387,7 +438,7 @@ const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const checkSVG = '<svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#0b0c0f" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
-let PROJECTS = [], TASKS = [], projMap = {}, EXPENSES = [], EMAILS = [], ADIDEAS = [];
+let PROJECTS = [], TASKS = [], projMap = {}, EXPENSES = [], EMAILS = [], ADIDEAS = [], SOCIALS = [];
 
 // Money: Swedish krona, e.g. "1 200 kr".
 const money = n => `${(Number(n)||0).toLocaleString("sv-SE",{maximumFractionDigits:2})} kr`;
@@ -493,6 +544,8 @@ async function loadAll(){
   EMAILS = emails || [];
   const { data:ads } = await supabase.from("ad_ideas").select("*").order("created_at");
   ADIDEAS = ads || [];
+  const { data:socials } = await supabase.from("socials").select("*").order("created_at");
+  SOCIALS = socials || [];
   // keep plan selection in sync with existing projects (default: all selected)
   const ids = new Set(PROJECTS.map(p=>p.id));
   planSel = new Set([...planSel].filter(id=>ids.has(id)));
@@ -572,6 +625,84 @@ $("#emWrap").addEventListener("click", e => {
   if(e.target.closest('[data-act="emdel"]')) deleteEmail(row.dataset.id);
 });
 
+/* ---------- Social media (modal) ---------- */
+let socEditId = null;
+const SOC_PLATS = [
+  { key:"tiktok",    label:"TikTok"    },
+  { key:"instagram", label:"Instagram" },
+  { key:"youtube",   label:"YouTube"   },
+  { key:"x",         label:"X"         },
+];
+function renderSocials(){
+  $("#socWrap").innerHTML = SOCIALS.length ? SOCIALS.map(s=>{
+    const handles = SOC_PLATS.map(p=>{
+      const v = (s[p.key]||"").trim();
+      return `<div class="sochandle"><span class="soc-plat ${p.key}">${p.label}</span><span class="socat ${v?"":"empty-h"}">${v?esc(v):"—"}</span></div>`;
+    }).join("");
+    return `<div class="socrow" data-id="${s.id}">
+       <div class="sochead">
+         <div class="socname">${esc(s.name||"Untitled")}</div>
+         <div class="socacts"><button class="linkbtn" data-act="socedit">Edit</button><button class="pdel" data-act="socdel" title="Delete">&times;</button></div>
+       </div>
+       <div class="sochandles">${handles}</div>
+     </div>`;
+  }).join("") : `<div class="empty">No accounts yet. Tap + Create to add one.</div>`;
+}
+function openSocForm(s){
+  socEditId = s ? s.id : null;
+  $("#socName").value = s ? (s.name||"") : "";
+  $("#socTiktok").value = s ? (s.tiktok||"") : "";
+  $("#socInstagram").value = s ? (s.instagram||"") : "";
+  $("#socYoutube").value = s ? (s.youtube||"") : "";
+  $("#socX").value = s ? (s.x||"") : "";
+  $("#socForm").classList.remove("hidden");
+  $("#socNew").classList.add("hidden");
+  $("#socName").focus();
+}
+function closeSocForm(){
+  socEditId = null;
+  $("#socForm").classList.add("hidden");
+  $("#socNew").classList.remove("hidden");
+}
+async function saveSocial(){
+  const row = {
+    name:      $("#socName").value.trim(),
+    tiktok:    $("#socTiktok").value.trim(),
+    instagram: $("#socInstagram").value.trim(),
+    youtube:   $("#socYoutube").value.trim(),
+    x:         $("#socX").value.trim(),
+  };
+  if(!row.name && !row.tiktok && !row.instagram && !row.youtube && !row.x){ closeSocForm(); return; }
+  if(socEditId){
+    await supabase.from("socials").update(row).eq("id", socEditId);
+  } else {
+    const sort = (SOCIALS.reduce((m,s)=>Math.max(m, s.sort??0), -1)) + 1;
+    await supabase.from("socials").insert({ ...row, sort });
+  }
+  closeSocForm();
+  await loadAll();
+  renderSocials();
+}
+async function deleteSocial(id){
+  SOCIALS = SOCIALS.filter(s=>s.id!==id); renderSocials();
+  await supabase.from("socials").delete().eq("id", id);
+}
+const openSocials  = () => { $("#socialModal").classList.remove("hidden"); closeSocForm(); renderSocials(); };
+const closeSocials = () => $("#socialModal").classList.add("hidden");
+$("#socialOpen").addEventListener("click", openSocials);
+$("#socialClose").addEventListener("click", closeSocials);
+$("#socialModal").addEventListener("click", e => { if(e.target.id==="socialModal") closeSocials(); });
+document.addEventListener("keydown", e => { if(e.key==="Escape") closeSocials(); });
+$("#socNew").addEventListener("click", () => openSocForm(null));
+$("#socSave").addEventListener("click", saveSocial);
+$("#socCancel").addEventListener("click", closeSocForm);
+$("#socX").addEventListener("keydown", e => { if(e.key==="Enter") saveSocial(); });
+$("#socWrap").addEventListener("click", e => {
+  const row = e.target.closest(".socrow"); if(!row) return;
+  if(e.target.closest('[data-act="socedit"]')){ const s = SOCIALS.find(x=>x.id===row.dataset.id); if(s) openSocForm(s); return; }
+  if(e.target.closest('[data-act="socdel"]')) deleteSocial(row.dataset.id);
+});
+
 /* ---------- Ad swipe file (modal) ---------- */
 function renderAds(){
   $("#adWrap").innerHTML = ADIDEAS.length ? ADIDEAS.map(a=>{
@@ -642,6 +773,7 @@ function searchResults(q){
   EMAILS.forEach(e=>{ if(`${e.label} ${e.address}`.toLowerCase().includes(q)) out.push({type:"email", id:e.id, title:e.label||e.address, sub:e.address, addr:e.address}); });
   EXPENSES.forEach(x=>{ if((x.name||"").toLowerCase().includes(q)) out.push({type:"expense", id:x.id, title:x.name, sub:`${money(x.amount)} / mo`}); });
   ADIDEAS.forEach(a=>{ if(`${a.idea} ${a.link}`.toLowerCase().includes(q)) out.push({type:"ad", id:a.id, title:a.idea||a.link, sub:a.link||"ad idea", link:a.link}); });
+  SOCIALS.forEach(s=>{ if(`${s.name} ${s.tiktok} ${s.instagram} ${s.youtube} ${s.x}`.toLowerCase().includes(q)) out.push({type:"social", id:s.id, title:s.name||"Account", sub:[s.tiktok,s.instagram,s.youtube,s.x].filter(Boolean).join(" · ")||"social"}); });
   return out.slice(0, 40);
 }
 function renderSearch(){
@@ -673,6 +805,8 @@ $("#searchWrap").addEventListener("click", e => {
     const sub = row.querySelector(".ssub"); if(sub){ const o = sub.textContent; sub.textContent = "Copied ✓"; setTimeout(()=>{ sub.textContent = o; }, 1200); }
   } else if(row.dataset.type==="ad"){
     if(row.dataset.link) window.open(row.dataset.link, "_blank", "noopener");
+  } else if(row.dataset.type==="social"){
+    closeSearch(); openSocials();
   }
 });
 
