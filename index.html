@@ -277,7 +277,8 @@
       <button class="signout" id="adOpen">💡 Ad ideas</button>
       <button class="signout" id="emailOpen">✉ Emails</button>
       <button class="signout" id="socialOpen">📱 Social media</button>
-      <button class="signout" id="signOut">Sign out</button>
+      <button class="signout" id="exportBtn">⤓ Backup</button>
+      <button class="signout" id="importBtn">⤒ Restore</button>
     </div>
   </header>
 
@@ -288,9 +289,10 @@
       <div class="proj-head"><span class="lbl">Projects · tap to pick</span><button class="padd" id="toggleAdd">+ New</button></div>
       <div class="addform" id="addForm">
         <input type="text" id="apName" placeholder="Project name (e.g. Fitness App)">
-        <textarea id="apDesc" placeholder="Describe it — what is it, who's it for, what do you want to build? The more detail, the sharper the breakdown."></textarea>
-        <button class="btn" id="apCreate">✨ Break it down &amp; create</button>
-        <div class="mini" id="apNote">Describe the project and AI breaks it into steps.</div>
+        <input type="text" id="apStatus" placeholder="Status (e.g. Planning · Live · Research)">
+        <textarea id="apSteps" placeholder="Steps — one per line (optional). e.g.&#10;Research the niche&#10;Set up the accounts&#10;Post the first video"></textarea>
+        <button class="btn" id="apCreate">+ Create project</button>
+        <div class="mini" id="apNote">Add a project, then list its steps — one per line.</div>
       </div>
       <div id="planProjects"></div>
       <div class="controls">
@@ -427,11 +429,155 @@
 </div>
 
 <script type="module">
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+/* ----------------------------------------------------------------------
+   Local backend — data lives in this browser (localStorage). No login,
+   no server, no Supabase. The `supabase` object below is a tiny shim that
+   reproduces the slice of the Supabase query API the app uses, so the rest
+   of the code works unchanged. Use ⤓ Backup / ⤒ Restore to move data
+   between devices/browsers or to keep a safety copy.
+---------------------------------------------------------------------- */
+const STORE_KEY = "studiohq.v1";
+const TABLES = ["projects","tasks","expenses","emails","ad_ideas","socials"];
 
-const SUPABASE_URL = "https://glokxrwliqactesgkrqu.supabase.co";
-const SUPABASE_KEY = "sb_publishable_9m-pNuQjH14jcBkMkeQQzw_NaIhYlv6";
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+// One-time seed: the data that was in the old cloud project. Used only on a
+// fresh browser that has never opened the app before.
+const SEED = JSON.parse(`{
+  "projects": [
+    {"id":"abc386c1-1dcd-4817-8319-348de76e0a2a","key":"vibecal-ai","name":"VibeCal AI","status":"Live","color":"#4ad6c0","sort":0,"created_at":"2026-06-02T11:27:50.823497+00:00","description":"Ive created an calorie tracker app its done and published, What I need to do now is to check for any buggs or problems when the app is live and create social media accounts tiktok and instagram, post daily on the tiktok account if one video goes viral I post that viral video on instagram"},
+    {"id":"e2734b92-9390-4309-89d8-950bfacf7429","key":"vidrush-youtube-channel","name":"Vidrush Youtube channel","status":"Planning","color":"#ff5a4d","sort":1,"created_at":"2026-06-02T12:53:01.163893+00:00","description":"I want to create a YouTube channel where I create videos using Vidrush I will try 3-5 videos and see how they go and maybe do more if they are good and I also need to do research on what niche I want to be in"},
+    {"id":"a90e886e-c705-48a6-9b44-ac737ae2d857","key":"ai-clipping-bot","name":"Ai clipping bot","status":"Planning","color":"#b07cff","sort":2,"created_at":"2026-06-02T12:57:19.851163+00:00","description":"I want to create an system using claude to create some sort of ai bot to copy and change text on the videos and repost them on my accounts clipping streamers, I need to create social media accounts like x YouTube instagram and tiktok maybe create a whole new email for this or use my existing stil don't know"},
+    {"id":"5c19b881-7b82-4cc0-b751-3d84d2c078e2","key":"spotify-pixel","name":"Spotify pixel","status":"Research","color":"#5b8cff","sort":4,"created_at":"2026-06-05T12:36:53.523774+00:00","description":"I want to create a pixel using claude code for my spotify to track saves, ive done some research but its bit left"}
+  ],
+  "tasks": [
+    {"id":"de756b67-ec6a-4d74-9299-2eb5237ce917","text":"4 · Post a video on TikTok","project_id":"abc386c1-1dcd-4817-8319-348de76e0a2a","due_date":null,"priority":"normal","done":false,"done_at":null,"sort":0,"created_at":"2026-06-02T11:27:50.925759+00:00","est_minutes":75,"recurrence":"daily","depends_on":null},
+    {"id":"36763b1c-5068-4b2d-851c-01f13f3c86af","text":"5 · Repost any viral TikTok video to Instagram","project_id":"abc386c1-1dcd-4817-8319-348de76e0a2a","due_date":null,"priority":"normal","done":false,"done_at":null,"sort":0,"created_at":"2026-06-02T11:27:50.925759+00:00","est_minutes":30,"recurrence":"daily","depends_on":null},
+    {"id":"ef1f0498-99a6-4eaf-99cd-de0882141962","text":"8 · Track analytics & engagement on first 5 videos","project_id":"e2734b92-9390-4309-89d8-950bfacf7429","due_date":null,"priority":"normal","done":false,"done_at":null,"sort":0,"created_at":"2026-06-02T12:53:01.312399+00:00","est_minutes":75,"recurrence":null,"depends_on":"4b30359b-adb0-4070-a27c-30b20340489e"},
+    {"id":"8656f30e-db5a-4c91-bf7f-5cf02960f715","text":"9 · Decide whether to continue & plan next batch or pivot","project_id":"e2734b92-9390-4309-89d8-950bfacf7429","due_date":null,"priority":"normal","done":false,"done_at":null,"sort":0,"created_at":"2026-06-02T12:53:01.312399+00:00","est_minutes":75,"recurrence":null,"depends_on":"ef1f0498-99a6-4eaf-99cd-de0882141962"},
+    {"id":"e7f5b0da-7ec5-4a2d-8a3c-17285c61eecf","text":"6 · Upload & publish first video to YouTube","project_id":"e2734b92-9390-4309-89d8-950bfacf7429","due_date":null,"priority":"normal","done":false,"done_at":null,"sort":0,"created_at":"2026-06-02T12:53:01.312399+00:00","est_minutes":30,"recurrence":null,"depends_on":null},
+    {"id":"4b30359b-adb0-4070-a27c-30b20340489e","text":"7 · Create, edit & publish remaining 2-4 test videos","project_id":"e2734b92-9390-4309-89d8-950bfacf7429","due_date":null,"priority":"normal","done":false,"done_at":null,"sort":0,"created_at":"2026-06-02T12:53:01.312399+00:00","est_minutes":180,"recurrence":null,"depends_on":"e7f5b0da-7ec5-4a2d-8a3c-17285c61eecf"},
+    {"id":"0b6f8293-8e72-4674-9434-de02144a472a","text":"9 · Launch bot & run clipping workflow daily across all platforms","project_id":"a90e886e-c705-48a6-9b44-ac737ae2d857","due_date":null,"priority":"normal","done":false,"done_at":"2026-06-14T11:32:16.309+00:00","sort":0,"created_at":"2026-06-02T12:57:19.978544+00:00","est_minutes":75,"recurrence":"daily","depends_on":null},
+    {"id":"b42b4aed-925a-4680-8ce0-def8e4e514d0","text":"8 · Set up first Snapchat ad campaign with budget & targeting","project_id":"abc386c1-1dcd-4817-8319-348de76e0a2a","due_date":"2026-06-11","priority":"normal","done":false,"done_at":null,"sort":0,"created_at":"2026-06-02T22:07:51.198305+00:00","est_minutes":75,"recurrence":null,"depends_on":null},
+    {"id":"44415d60-e4a7-4ef1-b037-818f2b255da9","text":"9 · Launch Snapchat ads & monitor initial performance","project_id":"abc386c1-1dcd-4817-8319-348de76e0a2a","due_date":null,"priority":"normal","done":false,"done_at":null,"sort":0,"created_at":"2026-06-02T22:07:51.198305+00:00","est_minutes":30,"recurrence":null,"depends_on":"b42b4aed-925a-4680-8ce0-def8e4e514d0"},
+    {"id":"de7d7273-f371-4058-9e23-56418551b954","text":"10 · Check Snapchat ad metrics & optimize underperforming ads","project_id":"abc386c1-1dcd-4817-8319-348de76e0a2a","due_date":null,"priority":"normal","done":false,"done_at":null,"sort":0,"created_at":"2026-06-02T22:07:51.198305+00:00","est_minutes":75,"recurrence":"daily","depends_on":"44415d60-e4a7-4ef1-b037-818f2b255da9"},
+    {"id":"fd78009a-439e-4c7e-96a0-aa3abfa3c783","text":"4 · Design data storage schema for saves history & snapshots","project_id":"5c19b881-7b82-4cc0-b751-3d84d2c078e2","due_date":null,"priority":"normal","done":false,"done_at":null,"sort":0,"created_at":"2026-06-05T12:36:53.72657+00:00","est_minutes":75,"recurrence":null,"depends_on":"1eca3e7d-9435-4d04-99ae-82cfc09a31ec"},
+    {"id":"393c1c4c-5d36-4afa-863e-a59a7c804976","text":"5 · Implement save tracking logic & store historical snapshots","project_id":"5c19b881-7b82-4cc0-b751-3d84d2c078e2","due_date":null,"priority":"normal","done":false,"done_at":null,"sort":0,"created_at":"2026-06-05T12:36:53.72657+00:00","est_minutes":180,"recurrence":null,"depends_on":null},
+    {"id":"3d11303a-7335-435a-a2b9-54d01a95698e","text":"6 · Build pixel display (charts/stats showing save trends)","project_id":"5c19b881-7b82-4cc0-b751-3d84d2c078e2","due_date":null,"priority":"normal","done":false,"done_at":null,"sort":0,"created_at":"2026-06-05T12:36:53.72657+00:00","est_minutes":180,"recurrence":null,"depends_on":"393c1c4c-5d36-4afa-863e-a59a7c804976"},
+    {"id":"ab4a186e-a59f-43d2-ad07-c76c5f06a0bc","text":"3 · Build Claude Code to fetch & parse Spotify saved tracks data","project_id":"5c19b881-7b82-4cc0-b751-3d84d2c078e2","due_date":null,"priority":"normal","done":false,"done_at":null,"sort":0,"created_at":"2026-06-05T12:36:53.72657+00:00","est_minutes":180,"recurrence":null,"depends_on":"b1b78129-a3b4-479a-80dc-60337645d085"},
+    {"id":"60f348bb-97ec-4574-b8f6-eb122fe02d6c","text":"7 · Test end-to-end: auth, fetch, storage, pixel rendering","project_id":"5c19b881-7b82-4cc0-b751-3d84d2c078e2","due_date":null,"priority":"normal","done":false,"done_at":null,"sort":0,"created_at":"2026-06-05T12:36:53.72657+00:00","est_minutes":75,"recurrence":null,"depends_on":"3d11303a-7335-435a-a2b9-54d01a95698e"},
+    {"id":"5f079b96-e61b-450d-a9dc-f5eec351901e","text":"8 · Deploy & document how to set up the pixel","project_id":"5c19b881-7b82-4cc0-b751-3d84d2c078e2","due_date":null,"priority":"normal","done":false,"done_at":null,"sort":0,"created_at":"2026-06-05T12:36:53.72657+00:00","est_minutes":75,"recurrence":null,"depends_on":"60f348bb-97ec-4574-b8f6-eb122fe02d6c"},
+    {"id":"b1b78129-a3b4-479a-80dc-60337645d085","text":"2 · Set up Spotify API credentials & OAuth flow in Claude Code","project_id":"5c19b881-7b82-4cc0-b751-3d84d2c078e2","due_date":null,"priority":"normal","done":false,"done_at":null,"sort":0,"created_at":"2026-06-05T12:36:53.72657+00:00","est_minutes":75,"recurrence":null,"depends_on":"1eca3e7d-9435-4d04-99ae-82cfc09a31ec"},
+    {"id":"1eca3e7d-9435-4d04-99ae-82cfc09a31ec","text":"1 · Map out pixel architecture: Spotify API calls, data schema, storage","project_id":"5c19b881-7b82-4cc0-b751-3d84d2c078e2","due_date":null,"priority":"high","done":false,"done_at":null,"sort":0,"created_at":"2026-06-05T12:36:53.72657+00:00","est_minutes":75,"recurrence":null,"depends_on":null}
+  ],
+  "expenses": [
+    {"id":"79a9a72d-6710-44a6-baec-49d0b1bcaf6a","name":"Anthropic","amount":1230,"sort":0,"created_at":"2026-06-02T18:07:09.139565+00:00"},
+    {"id":"7131c891-f30a-416e-96a0-384c82ee5255","name":"Higgsfield","amount":351,"sort":1,"created_at":"2026-06-02T18:07:26.039852+00:00"},
+    {"id":"1579cb64-b85f-4e8b-be54-cbdf7bbe6328","name":"Youtube","amount":99,"sort":2,"created_at":"2026-06-02T18:07:33.702045+00:00"},
+    {"id":"a73de41b-48d5-43f3-827e-31cef06eb651","name":"Spotify","amount":129,"sort":3,"created_at":"2026-06-02T18:07:47.46214+00:00"},
+    {"id":"49e9694e-5ce7-4970-9426-602e2a83e7c2","name":"Apple developer","amount":83,"sort":4,"created_at":"2026-06-02T18:08:22.61477+00:00"},
+    {"id":"9c53cbc9-91ec-4cfb-a3c1-f133339998cf","name":"Padel","amount":479,"sort":5,"created_at":"2026-06-02T20:38:28.72611+00:00"},
+    {"id":"edbdfe1e-d17e-4542-804a-e190e5a1b00b","name":"Gym","amount":299,"sort":6,"created_at":"2026-06-02T20:38:38.143539+00:00"}
+  ],
+  "emails": [
+    {"id":"9045bf90-eacc-4b11-8e5f-880742f552d1","label":"New Main","address":"Ahmad.sofy0211@gmail.com","sort":0,"created_at":"2026-06-03T00:48:12.380647+00:00"},
+    {"id":"5ab0f2b4-ed1e-4335-b83f-52807d4a9bed","label":"Old Main","address":"ahmad.ahmad021117@gmail.com","sort":1,"created_at":"2026-06-03T00:48:21.079438+00:00"},
+    {"id":"4f92cc18-a0cb-45b5-b7c5-31ae9b3a47c4","label":"Spotify Social Media","address":"ahmadlunora@gmail.com","sort":2,"created_at":"2026-06-03T00:49:09.615565+00:00"},
+    {"id":"10326384-3900-4d48-8c4f-a677fc390bf9","label":"Unused 2","address":"Ahmad.ahmad0211175@gmail.com","sort":4,"created_at":"2026-06-03T00:51:26.567518+00:00"},
+    {"id":"9e5ab878-c3dd-4288-a84a-acbe8a7a18d2","label":"Unused 1","address":"Ahmad.ahmad0211173@gmail.com","sort":5,"created_at":"2026-06-03T00:51:37.481198+00:00"},
+    {"id":"b2d79264-0180-47bc-897d-0c0c02b7e549","label":"Sofy Enterprises","address":"Enterprisessofy@gmail.com","sort":6,"created_at":"2026-06-03T00:51:59.598356+00:00"},
+    {"id":"29e43a00-02dd-4c49-974b-4d40152ac1db","label":"Snap Ads","address":"Ahmadads2@yahoo.com","sort":7,"created_at":"2026-06-03T01:08:16.684836+00:00"}
+  ],
+  "ad_ideas": [],
+  "socials": [
+    {"id":"a84b87b3-ba46-4079-852e-03e09765483f","name":"VibeCal","tiktok":"VibeCalAI","instagram":"VibeCalAI","youtube":"","x":"","sort":0,"created_at":"2026-06-04T22:28:30.93395+00:00"},
+    {"id":"8e3b7e28-fa08-42c0-bba3-bf02b3170935","name":"","tiktok":"kick.backclips","instagram":"kick.backclips","youtube":"kickback.clips","x":"Ahmadsofyy","sort":1,"created_at":"2026-06-08T11:39:37.33917+00:00"}
+  ]
+}`);
+
+let STORE = (() => {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if(raw){ const o = JSON.parse(raw); TABLES.forEach(t => { if(!Array.isArray(o[t])) o[t] = []; }); return o; }
+  } catch(_){}
+  return JSON.parse(JSON.stringify(SEED));
+})();
+function persist(){ try { localStorage.setItem(STORE_KEY, JSON.stringify(STORE)); } catch(_){} }
+const nowISO = () => new Date().toISOString();
+const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : "id-" + Math.random().toString(16).slice(2) + Date.now());
+
+function matchRow(row, filters){
+  return filters.every(f => {
+    if(f.type === "eq") return row[f.col] === f.val;
+    if(f.type === "in") return f.val.includes(row[f.col]);
+    if(f.type === "is") return (row[f.col] ?? null) === f.val;   // .is(col, null) → IS NULL
+    return true;
+  });
+}
+function insertDefaults(table, row){
+  const r = { ...row };
+  if(r.id == null) r.id = uuid();
+  if(r.created_at == null) r.created_at = nowISO();
+  if(r.sort == null) r.sort = (STORE[table].reduce((m,x) => Math.max(m, x.sort ?? 0), -1)) + 1;
+  if(table === "tasks"){
+    if(r.done == null) r.done = false;
+    if(r.done_at === undefined) r.done_at = null;
+    if(r.recurrence === undefined) r.recurrence = null;
+    if(r.depends_on === undefined) r.depends_on = null;
+  }
+  return r;
+}
+
+// Chainable, awaitable query builder over STORE — mimics the Supabase calls used here.
+class Query {
+  constructor(table){ this.table = table; this.op = "select"; this.payload = null; this.filters = []; this._order = null; this._single = false; }
+  select(){ return this; }
+  single(){ this._single = true; return this; }
+  order(col){ this._order = col; return this; }
+  insert(p){ this.op = "insert"; this.payload = p; return this; }
+  update(p){ this.op = "update"; this.payload = p; return this; }
+  delete(){ this.op = "delete"; return this; }
+  eq(col, val){ this.filters.push({ type:"eq", col, val }); return this; }
+  in(col, val){ this.filters.push({ type:"in", col, val }); return this; }
+  is(col, val){ this.filters.push({ type:"is", col, val }); return this; }
+  _run(){
+    const tbl = STORE[this.table] || (STORE[this.table] = []);
+    try {
+      if(this.op === "select"){
+        let rows = this.filters.length ? tbl.filter(r => matchRow(r, this.filters)) : tbl.slice();
+        if(this._order) rows.sort((a,b) => (a[this._order] > b[this._order] ? 1 : a[this._order] < b[this._order] ? -1 : 0));
+        return { data: this._single ? (rows[0] || null) : rows, error: null };
+      }
+      if(this.op === "insert"){
+        const arr = Array.isArray(this.payload) ? this.payload : [this.payload];
+        const made = arr.map(r => { const row = insertDefaults(this.table, r); tbl.push(row); return row; });
+        persist();
+        return { data: this._single ? made[0] : made, error: null };
+      }
+      if(this.op === "update"){
+        tbl.forEach(r => { if(matchRow(r, this.filters)) Object.assign(r, this.payload); });
+        persist();
+        return { data: null, error: null };
+      }
+      if(this.op === "delete"){
+        STORE[this.table] = tbl.filter(r => !matchRow(r, this.filters));
+        persist();
+        return { data: null, error: null };
+      }
+    } catch(e){ return { data: null, error: { message: String(e && e.message || e) } }; }
+  }
+  then(resolve, reject){ return Promise.resolve(this._run()).then(resolve, reject); }
+}
+
+const supabase = {
+  from: (table) => new Query(table),
+  auth: {
+    getSession: async () => ({ data: { session: { local: true } } }),
+    onAuthStateChange: () => ({ data: { subscription: { unsubscribe(){} } } }),
+    signOut: async () => ({ error: null }),
+    signInWithOtp: async () => ({ error: { message: "Sign-in is no longer needed — this planner lives on your device." } }),
+  },
+  _dump: () => STORE,
+  _load: (obj) => { TABLES.forEach(t => { STORE[t] = Array.isArray(obj[t]) ? obj[t] : []; }); persist(); },
+};
 
 const $ = s => document.querySelector(s);
 const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
@@ -502,7 +648,35 @@ function buildSteps(stepDefs, project_id, base){
 
 $("#sendLink").addEventListener("click", sendLink);
 $("#email").addEventListener("keydown", e => { if(e.key==="Enter") sendLink(); });
-$("#signOut").addEventListener("click", () => supabase.auth.signOut());
+
+/* ---------- Backup / Restore — move data between devices or keep a safety copy ---------- */
+function exportData(){
+  const blob = new Blob([JSON.stringify(supabase._dump(), null, 2)], { type:"application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `studio-hq-backup-${ymd(new Date())}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+function importData(){
+  const inp = document.createElement("input");
+  inp.type = "file"; inp.accept = "application/json,.json";
+  inp.onchange = () => {
+    const file = inp.files && inp.files[0]; if(!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      let data; try { data = JSON.parse(reader.result); } catch { alert("That file isn't valid JSON."); return; }
+      if(!data || !Array.isArray(data.tasks)){ alert("That file isn't a Studio HQ backup."); return; }
+      if(!confirm("Replace everything on this device with the backup file? This can't be undone.")) return;
+      supabase._load(data);
+      loadAll();
+    };
+    reader.readAsText(file);
+  };
+  inp.click();
+}
+$("#exportBtn").addEventListener("click", exportData);
+$("#importBtn").addEventListener("click", importData);
 
 async function sendLink(){
   const email = $("#email").value.trim();
@@ -912,43 +1086,16 @@ $("#toggleAdd").addEventListener("click", () => {
 $("#apName").addEventListener("keydown", e => { if(e.key==="Enter") createProject(); });
 $("#apCreate").addEventListener("click", createProject);
 
-const RESET_NOTE = "Describe the project and AI breaks it into tailored steps.";
-
-async function aiBreakdown(name, description, current){
-  const body = { name, description };
-  if(Array.isArray(current) && current.length) body.current = current;
-  const { data, error } = await supabase.functions.invoke("project-breakdown", { body });
-  let payload = data;
-  if(error){
-    try { payload = await error.context.json(); } catch { payload = null; }
-    if(!payload) throw new Error(error.message || "request failed");
-  }
-  if(payload?.error) throw new Error(payload.error);
-  if(!Array.isArray(payload?.steps) || !payload.steps.length) throw new Error("no steps returned");
-  return { steps: payload.steps, status: (payload.status || "").trim() };
-}
+const RESET_NOTE = "Add a project, then list its steps — one per line.";
 
 async function createProject(){
   const name = $("#apName").value.trim();
-  const desc = $("#apDesc").value.trim();
+  const status = $("#apStatus").value.trim();
   const note = $("#apNote");
   if(!name){ note.className="mini err"; note.textContent="Give the project a name first."; return; }
-  if(!desc){ note.className="mini err"; note.textContent="Describe the project so AI can break it down."; return; }
 
-  $("#apCreate").disabled = true;
-
-  // Steps come from AI, tailored to the description.
-  let stepDefs, status;
-  note.className="mini"; note.textContent="✨ Breaking it down with AI…";
-  try {
-    const r = await aiBreakdown(name, desc);
-    stepDefs = r.steps; status = r.status || "";
-  } catch(e){
-    $("#apCreate").disabled = false;
-    note.className="mini err";
-    note.textContent = `AI couldn't break it down (${String(e.message||e).slice(0,80)}). Try again or tweak the description.`;
-    return;
-  }
+  // Steps: one per line in the box (optional). Each line becomes a backlog task.
+  const stepLines = $("#apSteps").value.split("\n").map(s=>s.trim()).filter(Boolean);
 
   // unique key + unused colour + next sort
   let key = slug(name); const existing = new Set(PROJECTS.map(p=>p.key));
@@ -957,15 +1104,15 @@ async function createProject(){
   const sort = (PROJECTS.reduce((m,p)=>Math.max(m, p.sort??0), -1)) + 1;
 
   const { data:proj, error } = await supabase.from("projects")
-    .insert({ key, name, status, color, sort, description: desc }).select().single();
-  if(error || !proj){ $("#apCreate").disabled=false; note.className="mini err"; note.textContent = error?.message || "Couldn't create that."; return; }
+    .insert({ key, name, status, color, sort, description: "" }).select().single();
+  if(error || !proj){ note.className="mini err"; note.textContent = error?.message || "Couldn't create that."; return; }
 
+  const stepDefs = stepLines.map(text => ({ text, size:"focus" }));
   if(stepDefs.length){
     await supabase.from("tasks").insert(buildSteps(stepDefs, proj.id, 0));
   }
 
-  $("#apCreate").disabled = false;
-  $("#apName").value = ""; $("#apDesc").value = "";
+  $("#apName").value = ""; $("#apStatus").value = ""; $("#apSteps").value = "";
   $("#addForm").classList.remove("open");
   const made = stepDefs.length;
   note.className="mini ok"; note.textContent = made ? `Created with ${made} step${made>1?"s":""}.` : "Created.";
@@ -991,37 +1138,22 @@ function setAddMsg(msg, cls="mini"){
   const n = $("#paNote"); if(n){ n.className = cls; n.textContent = msg; }
 }
 
-// One box to update a project: describe what to add, remove, or change and AI revises the steps.
-// The AI sees the current open steps so it can keep, drop, or add. Done & scheduled steps are untouched.
+// The ✎ box is a plain editor for a project's open steps — one per line. Saving
+// replaces this project's open (not-done, unscheduled, non-daily) steps with the
+// list; done, scheduled, and daily steps are left untouched.
 async function updateProject(id){
   const p = projMap[id]; if(!p) return;
-  const desc = $("#paDesc")?.value.trim();
-  if(!desc){ setAddMsg("Tell me what to add, remove, or change.", "mini err"); return; }
-  const btn = $("#paGo"); if(btn) btn.disabled = true;
-  setAddMsg("✨ Updating the steps with AI…");
+  const lines = ($("#paDesc")?.value || "").split("\n").map(s=>s.trim()).filter(Boolean);
 
-  // The editable steps: this project's open (not-done, unscheduled) tasks, minus the "N · " prefix.
-  const openSteps = TASKS.filter(t=>t.project_id===id && !t.done && !t.due_date)
-                         .map(t => t.text.replace(/^\d+\s*·\s*/, ""));
-  let r;
-  try { r = await aiBreakdown(p.name, desc, openSteps); }
-  catch(e){
-    if(btn) btn.disabled = false;
-    setAddMsg(`AI couldn't update it (${String(e.message||e).slice(0,80)}).`, "mini err");
-    return;
-  }
-
-  // Swap the open steps for the AI's updated list; keep done & scheduled ones.
-  await supabase.from("projects").update({ status: r.status || p.status || "" }).eq("id", id);
-  await supabase.from("tasks").delete().eq("project_id", id).eq("done", false).is("due_date", null);
-  const kept = TASKS.filter(t=>t.project_id===id && (t.done || t.due_date));
+  await supabase.from("tasks").delete().eq("project_id", id).eq("done", false).is("due_date", null).is("recurrence", null);
+  const kept = TASKS.filter(t=>t.project_id===id && (t.done || t.due_date || isDaily(t)));
   const base = kept.reduce((m,t)=>{ const n=/^(\d+)\s*·/.exec(t.text); return n ? Math.max(m, Number(n[1])) : m; }, 0);
-  const steps = buildSteps(r.steps, id, base);
+  const steps = buildSteps(lines.map(text => ({ text, size:"focus" })), id, base);
   if(steps.length) await supabase.from("tasks").insert(steps);
 
   const made = steps.length;
   if($("#paDesc")) $("#paDesc").value = "";
-  addMsg = `Updated — ${made} step${made!==1?"s":""} now${kept.length?", kept "+kept.length+" done/scheduled":""}.`;
+  addMsg = `Saved — ${made} open step${made!==1?"s":""}${kept.length?", kept "+kept.length+" done/scheduled":""}.`;
   addCls = "mini ok";
   await loadAll();
   setTimeout(()=>{ addMsg = ""; addCls = "mini"; const n=$("#paNote"); if(n) n.textContent=""; }, 5000);
@@ -1049,9 +1181,11 @@ function renderProjects(){
     </div>`;
     let form = "";
     if(p.id===addOpen){
+      const openSteps = TASKS.filter(t=>t.project_id===p.id && !t.done && !t.due_date && !isDaily(t))
+                             .map(t => t.text.replace(/^\d+\s*·\s*/, ""));
       form = `<div class="proj-add">
-        <textarea id="paDesc" placeholder="What to add, remove or change for ${esc(p.name)}? e.g. “add a step for thumbnails” or “drop the bug-check step”. AI updates the list."></textarea>
-        <button class="btn" id="paGo" data-act="pago" data-pid="${p.id}">✨ Break it down &amp; add</button>
+        <textarea id="paDesc" placeholder="One step per line — edit, add or remove, then Save.">${esc(openSteps.join("\n"))}</textarea>
+        <button class="btn" id="paGo" data-act="pago" data-pid="${p.id}">Save steps</button>
         <div class="${addCls}" id="paNote">${esc(addMsg)}</div>
       </div>`;
     }
